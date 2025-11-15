@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+        cpp: [17]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Configure CMake
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      
+    - name: Build
+      run: |
+        cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
+      
+    - name: Test
+      run: |
+        cd ${{github.workspace}}/build
+        # 运行 Debug 配置的测试（最常用，默认构建通常是 Debug）
+        ctest -C Debug
+        # 若构建了 Release 配置，运行 Release 版本的测试
+        ctest -C Release
