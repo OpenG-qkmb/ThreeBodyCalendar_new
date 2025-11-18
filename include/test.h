@@ -6,9 +6,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
-#include <ctime>
 #include <chrono>
-#include <corecrt.h>
 #include "3dv.h"
 #include "physics.h"
 #include "integrator.h"
