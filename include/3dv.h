@@ -1,4 +1,5 @@
 #pragma once
+
 #ifndef _3DV_H_
 #define _3DV_H_
 
@@ -20,12 +21,15 @@ public:
 	double x, y, z;
 	
 	// 构造函数
+
 	_3dv() : x(0.0), y(0.0), z(0.0) {}
 	_3dv(double x, double y, double z) : x(x), y(y), z(z) {}
+	_3dv(double mag) : x(mag), y(mag), z(mag) {}
 	_3dv(const _3dv& v) : x(v.x), y(v.y), z(v.z) {}
 	~_3dv() = default;
 
 	// 运算符重载
+
 	_3dv& operator=(const _3dv& v)
 	{
 		x = v.x; y = v.y; z = v.z;
@@ -162,7 +166,7 @@ public:
 		double scalar = this->dot(v) / v_mag_2;
 		return v * scalar;
 	}
-	_3dv reflect(const _3dv& normal) const // 向量反射
+	_3dv reflect(const _3dv& normal) const // 向量反射（给出反射面之法向量）
 	{
 		_3dv e = normal._e();
 		double dot_prod = this->dot(e);

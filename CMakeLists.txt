@@ -18,7 +18,7 @@ add_executable(ThreeBodyCalendar
     src/main.cpp
     
     # 其他源文件将逐步添加
- "include/test.h" "include/integrator.h")
+ "include/test.h" "include/integrator.h" "include/physics.h")
 
 # 编译器选项
 if(MSVC)
