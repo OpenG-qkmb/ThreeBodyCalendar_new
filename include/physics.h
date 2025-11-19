@@ -36,6 +36,21 @@ public:
 
 	// 运算符重载
 
+	_obj operator+(const _obj& o) const // 合并天体
+	{
+		_obj res;
+		res.m = m + o.m;
+		res.pos = (m * pos + o.m * o.pos) / res.m; // 质心位置
+		res.v = (m * v + o.m * o.v) / res.m; // 动量守恒
+		res.a = _3dv(0); // 加速度作废
+		res.id = id + " + " + o.id;
+		res.type = (type == STAR || o.type == STAR) ? STAR : PLANET; // 有恒星则为恒星
+		return res;
+	}
+	friend _obj operator+=(const _obj& lhs, const _obj& rhs)
+	{
+		return lhs + rhs;
+	}
 	bool operator==(const _obj& o) const // == 判断id是否相等
 	{
 		return (id == o.id);
@@ -46,12 +61,12 @@ public:
 	}
 	friend std::ostream& operator<<(std::ostream& os, const _obj& o) // 输出流
 	{
-		os	<< "Object \"" << o.id << "\":"
-			<< std::endl << "Type=" << (o.type == STAR ? "STAR" : "PLANET")
-			<< std::endl << "Mass=" << o.m
-			<< std::endl << "Position=" << o.pos
-			<< std::endl << "Velocity=" << o.v
-			<< std::endl << "Acceleration=" << o.a << std::endl;
+		os	<< "[Object] \"" << o.id << "\": "
+			<< std::endl << "Type = " << (o.type == STAR ? "[STAR]" : "[PLANET]")
+			<< std::endl << "Mass = " << o.m
+			<< std::endl << "Position = " << o.pos
+			<< std::endl << "Velocity = " << o.v
+			<< std::endl << "Acceleration = " << o.a << std::endl;
 		return os;
 	}
 
@@ -120,6 +135,63 @@ public:
 			}
 		}
 		return;
+	}
+
+	void merge() // 合并相撞天体
+	{
+		if (available)
+			return;
+		while (true)
+		{
+			bool tag = false;
+			for (size_t i = 0; i < objs.size(); ++i)
+			{
+				for (size_t j = i + 1; j < objs.size(); ++j)
+				{
+					if (objs[i].pos.distance_2(objs[j].pos) < SMALL_NUM) // 距离过近
+					{
+						_obj new_obj = objs[i] + objs[j];
+						objs.erase(objs.begin() + j);
+						objs.erase(objs.begin() + i);
+						objs.push_back(new_obj);
+						tag = true;
+						break;
+					}
+				}
+				if (tag)
+					break;
+			}
+			if (!tag)
+				break;
+		}
+		available = true;
+		set_a();
+		return;
+	}
+
+	void merge_compulsory()
+	{
+		available = false;
+		merge();
+		return;
+	}
+
+	double get_energy() // 获取系统总能量
+	{
+		merge_compulsory(); // 强制合并，防止除以零
+		double ek = 0.0, ep = 0.0;
+		for (size_t i = 0; i < objs.size(); ++i)
+		{
+			ek += 0.5 * objs[i].m * objs[i].v.mag_2();
+			for (size_t j = i + 1; j < objs.size(); ++j)
+			{
+				double dist = objs[i].pos.distance(objs[j].pos);
+				if (dist < SMALL_NUM)
+					continue; // 防止除以零
+				ep -= G * objs[i].m * objs[j].m / dist;
+			}
+		}
+		return ek + ep;
 	}
 
 	// man, what can i say!!!

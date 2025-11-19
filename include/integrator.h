@@ -8,6 +8,7 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <string>
 #include <string_view>
 #include <cstdlib>
 
@@ -128,7 +129,10 @@ void integrate_dt(_state& state, double dt, std::string_view method = "verlet") 
 		DEFAULT_INTEGRATOR(state, dt);
 		return;
 	}
-	auto it = FUNC_MAP.find(method[0]);
+	char first_char = method[0];
+	if (first_char >= 'A' && first_char <= 'Z')
+		first_char += 'a' - 'A';
+	auto it = FUNC_MAP.find(first_char);
 	if (it != FUNC_MAP.end())
 		it->second(state, dt);
 	else

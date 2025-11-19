@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <chrono>
+#include <string>
 #include "3dv.h"
 #include "physics.h"
 #include "integrator.h"
@@ -43,31 +44,53 @@ void test_3dv()
 	return;
 }
 
-void test_intrg()
+void test_intrg_two_body()
 {
-	std::cout << "Test: Two-body problem (Earth orbiting the Sun)]" << std::endl;
-	_state solar_sys, sys[3];
-	long double t = 0.0, tm[3]{};
-	double v_earth = sqrt(G * SOLAR_MASS / AU); // 计算地球公转速度大小
+	std::cout << "[Test]: Two-body problem (Earth orbiting the Sun)]" << std::endl;
+	constexpr int N = 3;
+	_state solar_sys, sys;
+	long double t0, t1, e0 = 0, e1 = 0;
+	const double v_earth = sqrt(G * SOLAR_MASS / AU); // 计算地球公转速度大小
+	const std::string method[N] = {"Euler", "Verlet", "RK4"};
 	solar_sys.add(_obj(STAR, SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
 	solar_sys.add(_obj(PLANET, EARTH_MASS, _3dv(AU, 0, 0), _3dv(0, v_earth, 0), _3dv(0), "earth"));
 	solar_sys.set_a();
-	sys[0] = sys[1] = sys[2] = solar_sys;
-	t = gettime();
-	state_goto(sys[0], DAY_SECONDS * 30.0, 3600.0, "euler");
-	tm[0] = gettime() - t;
-	std::cout << _LINE << std::endl << "Euler:" << std::endl << sys[0]
-		<< "Time (ns): " << tm[0] << std::endl << _LINE_MID << std::endl << std::endl;
-	tm[0] = gettime();
-	state_goto(sys[1], DAY_SECONDS * 30.0, 3600.0, "verlet");
-	tm[1] = gettime() - tm[0];
-	std::cout << _LINE << std::endl << "Verlet:" << std::endl << sys[1]
-		<< "Time (ns): " << tm[1] << std::endl << _LINE_MID << std::endl << std::endl;
-	tm[1] = gettime();
-	state_goto(sys[2], DAY_SECONDS * 30.0, 3600.0, "rk4");
-	tm[2] = gettime() - tm[1];
-	std::cout << _LINE << std::endl << "RK4:" << std::endl << sys[2]
-		<< "Time (ns): " << tm[2] << std::endl << _LINE_MID << std::endl << std::endl;
+	e0 = solar_sys.get_energy();
+	for (int i = 0; i < N; ++i)
+	{
+		sys = solar_sys;
+		t0 = gettime();
+		state_goto(sys, DAY_SECONDS * 30.0, 3600.0, method[i]);
+		t1 = gettime() - t0;
+		e1 = sys.get_energy();
+		std::cout << _LINE << std::endl << method[i] << ":" << std::endl << sys
+			<< "Time (ns): " << t1 << std::endl
+			<< "Energy0: " << e0 << "   " << "Energy1: " << e0 << std::endl 
+			<< _LINE_MID << std::endl << std::endl;
+	}
+	return;
+}
+
+void test_intrg_merge() // FAILED
+{
+	std::cout << std::endl << "[Test]: Merge (Earth dropping into the Sun)]" << std::endl;
+	_state test_sys;
+	double v_earth = sqrt(G * SOLAR_MASS / AU);
+	test_sys.add(_obj(STAR, SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
+	test_sys.add(_obj(PLANET, EARTH_MASS, _3dv(AU, 0, 0), _3dv(0, 0, 0), _3dv(0), "earth"));
+	test_sys.set_a();
+	std::cout << _LINE << std::endl << "Before:" << std::endl << test_sys << std::endl;
+	state_goto(test_sys, DAY_SECONDS * STD_YEAR , 60, "verlet");
+	test_sys.merge();
+	std::cout << _LINE << std::endl << "After:" << std::endl << test_sys << std::endl;
+	return;
+}
+
+void test_intrg()
+{
+	test_intrg_two_body();
+	// std::cout << _LINE_MID << std::endl;
+	// test_intrg_merge();
 	return;
 }
 
@@ -80,7 +103,7 @@ inline void printlnn()
 
 void test_all()
 {
-	std::cout << "[Test 3D vector: input two vectors]" << std::endl;
+	std::cout << "[Test 3D vector] Input two vectors:" << std::endl;
 	test_3dv();
 	printlnn();
 	std::cout << "[Test integrator]" << std::endl;
