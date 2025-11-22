@@ -117,11 +117,11 @@ const std::map<char, _func_ptr> FUNC_MAP = {
 	{'e', euler_step},
 	{'v', verlet_step},
 	{'r', rk4_step}
-}; // 便于用户手动切换积分方法
+};
 
 constexpr _func_ptr DEFAULT_INTEGRATOR = verlet_step; // 默认积分方法
 
-void integrate_dt(_state& state, double dt, std::string_view method = "verlet") // 前进dt，method指定积分方法
+void integrate_dt(_state& state, double dt, std::string_view method = "verlet") // 前进dt
 {
 	
 	if (method.empty())
@@ -137,6 +137,13 @@ void integrate_dt(_state& state, double dt, std::string_view method = "verlet") 
 		it->second(state, dt);
 	else
 		DEFAULT_INTEGRATOR(state, dt);
+	return;
+}
+
+void integrate_dt_a(_state& state, double dt, std::string_view method = "verlet")
+{
+	integrate_dt(state, dt, method);
+	state.set_a();
 	return;
 }
 

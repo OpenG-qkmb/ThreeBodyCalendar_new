@@ -44,9 +44,9 @@ void test_3dv()
 	return;
 }
 
-void test_intrg_two_body()
+void test_intrg_two_body_comp()
 {
-	std::cout << "[Test]: Two-body problem (Earth orbiting the Sun)]" << std::endl;
+	std::cout << "[Test]: Comparison - Two-body problem (Earth orbiting the Sun)]" << std::endl;
 	constexpr int N = 3;
 	_state solar_sys, sys;
 	long double t0, t1, e0 = 0, e1 = 0;
@@ -71,6 +71,28 @@ void test_intrg_two_body()
 	return;
 }
 
+void test_intrg_two_body_timeline()
+{
+	std::cout << "[Test]: Two-body problem (Earth orbiting the Sun)]" << std::endl;
+	_state sys;
+	const double v_earth = sqrt(G * SOLAR_MASS / AU);
+	double e0 = 0, e1 = 0, dt = 3600;
+	int steps = static_cast<int>(24 * STD_YEAR);
+	sys.add(_obj(STAR, SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
+	sys.add(_obj(PLANET, EARTH_MASS, _3dv(AU, 0, 0), _3dv(0, v_earth, 0), _3dv(0), "earth"));
+	sys.set_a();
+	e0 = sys.get_energy();
+	while (steps--)
+	{
+		integrate_dt_a(sys, dt, "verlet");
+		e1 = sys.get_energy();
+		std::cout << "---------" << std::endl << sys
+			<< "Energy: " << e1 << "   "
+			<< "deltaEnergy: " << e0 - e1 << std::endl << "---------" << std::endl;
+	}
+	return;
+}
+
 void test_intrg_merge() // FAILED
 {
 	std::cout << std::endl << "[Test]: Merge (Earth dropping into the Sun)]" << std::endl;
@@ -81,16 +103,18 @@ void test_intrg_merge() // FAILED
 	test_sys.set_a();
 	std::cout << _LINE << std::endl << "Before:" << std::endl << test_sys << std::endl;
 	state_goto(test_sys, DAY_SECONDS * STD_YEAR , 60, "verlet");
-	test_sys.merge();
+	test_sys.merge_compulsory();
 	std::cout << _LINE << std::endl << "After:" << std::endl << test_sys << std::endl;
 	return;
 }
 
 void test_intrg()
 {
-	test_intrg_two_body();
-	// std::cout << _LINE_MID << std::endl;
-	// test_intrg_merge();
+	test_intrg_two_body_comp();
+	std::cout << _LINE_MID << std::endl;
+	test_intrg_two_body_timeline();
+	std::cout << _LINE_MID << std::endl;
+	test_intrg_merge();
 	return;
 }
 

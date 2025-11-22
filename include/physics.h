@@ -7,6 +7,7 @@
 #include "3dv.h"
 #include <vector>
 #include <string>
+#include <cmath>
 
 enum _type{STAR, PLANET}; // 恒星 行星
 
@@ -18,6 +19,7 @@ constexpr double EARTH_MASS = 5.972e24;  // 地球质量 (kg)
 constexpr double AU = 1.496e11;          // 天文单位 (m)
 constexpr double DAY_SECONDS = 86400.0;  // 一天的秒数
 constexpr double STD_YEAR = 365.25;      // 一年的天数
+constexpr double V_SUN = 22000.0;        // 太阳系绕银河系中心公转速度 (m/s)
 
 class _obj // 天体
 {
@@ -90,23 +92,21 @@ public:
 	*}*/
 	~_state() = default;
 
-	// 运算符重载
-
-	friend std::ostream& operator<<(std::ostream& os, const _state& s) // 输出流
-	{
-		os << "State at time " << s.time << " s:" << std::endl;
-		for (const _obj& o : s.objs)
-		{
-			os << "  " << o << std::endl;
-		}
-		return os;
-	}
-
 	// 有关操作
 
 	size_t size() const
 	{
 		return objs.size();
+	}
+
+	bool isexist(std::string uid) const
+	{
+		for (const _obj& o : objs)
+		{
+			if (o.id == uid)
+				return true;
+		}
+		return false;
 	}
 
 	void add(const _obj& o)
@@ -176,6 +176,29 @@ public:
 		return;
 	}
 
+	bool orbit_me(std::string sunid, _obj& o, double r)
+	{
+		_obj sun = _obj();
+		bool flag = false;
+		for (const _obj& obj : objs)
+		{
+			if (obj.id == sunid)
+			{
+				sun = obj;
+				flag = true;
+				break;
+			}
+		}
+		if (!flag || sun.type == PLANET)
+			return false;
+		double v = sqrt(G * sun.m / r);
+		o.pos = sun.pos + _3dv(r, 0, 0);
+		o.v = sun.v + _3dv(0, v, 0);
+		o.a = _3dv();
+		add(o);
+		return true;
+	}
+
 	double get_energy() // 获取系统总能量
 	{
 		merge_compulsory(); // 强制合并，防止除以零
@@ -194,7 +217,20 @@ public:
 		return ek + ep;
 	}
 
+	// 运算符重载
+
+	friend std::ostream& operator<<(std::ostream& os, _state& s) // 输出流
+	{
+		os << "State at time " << s.time << " s:" << std::endl;
+		for (const _obj& o : s.objs)
+		{
+			os << "  " << o << std::endl;
+		}
+		os << "Energy: " << s.get_energy() << std::endl;
+		return os;
+	}
+
 	// man, what can i say!!!
-};
+} state;
 
 #endif
