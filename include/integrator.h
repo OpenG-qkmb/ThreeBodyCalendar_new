@@ -25,6 +25,7 @@ void euler_step(_state& state, double dt) // 欧拉法前进dt
 		o.pos += o.v * dt;
 	}
 	state.time += dt;
+	state.set_a();
 	return;
 }
 
@@ -44,6 +45,7 @@ void verlet_step(_state& state, double dt) // 显式Verlet法前进dt，无需欧拉法初始
 		a_old.pop();
 	}
 	state.time += dt;
+	state.set_a();
 	return;
 }
 // https://zhuanlan.zhihu.com/p/1941592778577519357（文末）
@@ -107,6 +109,7 @@ void rk4_step(_state& state, double dt) // RK4法前进dt（若需，考虑优化？）
 		state.objs[i].v += (k1_a[i] + 2.0 * k2_a[i] + 2.0 * k3_a[i] + k4_a[i]) * (dt / 6.0);
 	}
 	state.time += dt;
+	state.set_a();
 	return;
 }
 // 翻百科能找到这个积分方法的公式
@@ -127,6 +130,7 @@ void integrate_dt(_state& state, double dt, std::string_view method = "verlet") 
 	if (method.empty())
 	{
 		DEFAULT_INTEGRATOR(state, dt);
+		state.merge();
 		return;
 	}
 	char first_char = method[0];
@@ -140,13 +144,6 @@ void integrate_dt(_state& state, double dt, std::string_view method = "verlet") 
 	return;
 }
 
-void integrate_dt_a(_state& state, double dt, std::string_view method = "verlet")
-{
-	integrate_dt(state, dt, method);
-	state.set_a();
-	return;
-}
-
 void state_goto(_state& state, double t_tar, double dt, std::string_view method = "verlet") // 积分前进至t_tar
 {
 	if (t_tar <= state.time)
@@ -156,9 +153,11 @@ void state_goto(_state& state, double t_tar, double dt, std::string_view method 
 	{
 		double step_dt = (t_rem < dt) ? t_rem : dt;
 		integrate_dt(state, step_dt, method);
+		state.merge();
 		t_rem -= step_dt;
 	}
 	state.set_a();
+	state.merge();
 	return;
 }
 

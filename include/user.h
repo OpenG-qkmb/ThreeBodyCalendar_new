@@ -18,8 +18,8 @@
 // command format:
 // 
 // initialize -manual
-// add <type (= star/sun)> <id> <mass> <x> <y> <z> <vx> <vy> <vz> (add sun)
-// add <type (= planet/earth)> <id> <mass> <x> <y> <z> <vx> <vy> <vz> (add planet - 1)
+// add <type (= star/sun)> <id> <mass> <x> <y> <z> <vx> <vy> <vz> (add sun, mass: 1 = SOLAR_MASS)
+// add <type (= planet/earth)> <id> <mass> <x> <y> <z> <vx> <vy> <vz> (add planet - 1, mass: 1 = EARTH_MASS)
 // add <type (= planet/earth)> <id> <mass> orbit <id_sun> <r> (add planet - 2)
 // end initialize
 // 
@@ -33,9 +33,9 @@
 // <end initialize> (don't type this line when importing from file)
 // 
 // auto (default)
-// step <dt (= 3600s in simulation)> <steps (between every output, = 3s in real world)>
+// step <dt (= 1h in simulation)> <steps (between every output, = 1h)>
 // method <method (= euler/verlet/rk4)>
-// print2screen (default) / print2file <filename> (default: output_<time>.txt)
+// print2screen (default) / print2file <filename>
 // timelen <total_time (= 1y)>
 // timelen unlimited
 // 
@@ -127,9 +127,9 @@ public:
 	std::string filename = "";
 	std::ofstream fout;
 
-	double dt = 3600, steps = 3;
+	double dt = 1., steps = 1.;
 	std::string method = "verlet";
-	double timelen = STD_YEAR * DAY_SECONDS;
+	double timelen = phy::YEAR;
 	bool unlimited = false;
 
 	
@@ -247,11 +247,15 @@ public:
 				continue;
 			}
 			q.pop();
+			if (sample.type == STAR)
+				sample.m *= phy::SOLAR_MASS;
+			/*else
+			*	sample.m *= phy::EARTH_MASS;*/
 
 			if (isrand)
 			{
-				sample.pos = rand_v(AU * 100);
-				sample.v = rand_v(V_SUN);
+				sample.pos = rand_v(phy::AU * 100);
+				sample.v = rand_v(phy::V_SUN * 10);
 				sample.a = _3dv();
 				state.add(sample);
 				continue;
@@ -263,7 +267,7 @@ public:
 			{
 				q.pop();
 				std::string sunid = q.front();
-				double r = AU;
+				double r = phy::AU;
 				if (!state.isexist(sunid))
 				{
 					std::cerr << "[Error] Cannot find the object." << std::endl;
@@ -420,7 +424,7 @@ public:
 	{
 		_Q q;
 		
-		srand(time(NULL));
+		srand(static_cast<unsigned int>(time(NULL)));
 
 		// initialize
 		std::cout << "[Tip] Initialize before simulation. See README.md for help." << std::endl;
@@ -478,8 +482,6 @@ public:
 			if (jump)
 				break;
 			q = _get();
-			if (q.front() == "start")
-				break;
 		} while (q.front().back() != 't' && q.front().front() != 'b' && q.front().front() != 'e');
 		return;
 	}

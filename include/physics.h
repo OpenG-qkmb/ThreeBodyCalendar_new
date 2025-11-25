@@ -13,13 +13,34 @@ enum _type{STAR, PLANET}; // 恒星 行星
 
 // 常用常量
 
-constexpr double G = 6.67430e-11;        // 引力常数 (m³/kg/s²)
-constexpr double SOLAR_MASS = 1.989e30;  // 太阳质量 (kg)
-constexpr double EARTH_MASS = 5.972e24;  // 地球质量 (kg)
-constexpr double AU = 1.496e11;          // 天文单位 (m)
-constexpr double DAY_SECONDS = 86400.0;  // 一天的秒数
-constexpr double STD_YEAR = 365.25;      // 一年的天数
-constexpr double V_SUN = 22000.0;        // 太阳系绕银河系中心公转速度 (m/s)
+
+namespace oriphy
+{
+	constexpr double G = 6.67430e-11;        // 引力常数 (m³/kg/s²)
+	constexpr double SOLAR_MASS = 1.989e30;  // 太阳质量 (kg)
+	constexpr double EARTH_MASS = 5.965e24;  // 地球质量 (kg)
+	constexpr double AU = 1.496e11;          // 天文单位 (m)
+	constexpr double DAY_SECONDS = 86400.;  // 一天的秒数
+	constexpr double STD_YEAR = 365.25;      // 一年的天数
+	constexpr double V_SUN = 22000.;        // 太阳系绕银河系中心公转速度 (m/s)
+}
+
+// 事实是：使用上面这样带原始单位的物理量作模拟，性能较差且不易于交互，故作如下处理：
+
+namespace phy
+{
+	constexpr double AU = 1.;
+	constexpr double EARTH_MASS = 1.;
+	constexpr double HOUR = 1.;
+	constexpr double DAY = 24.; // 小时
+	constexpr double YEAR = 365.25 * DAY;
+	constexpr double SOLAR_MASS = oriphy::SOLAR_MASS / oriphy::EARTH_MASS; // = 333445.0964 (EARTH_MASS)
+	constexpr double G = oriphy::G * (3600. * 3600.) * (oriphy::EARTH_MASS) / (oriphy::AU * oriphy::AU * oriphy::AU); // (AU³/EARTH_MASS/h²)
+	constexpr double V_SUN = oriphy::V_SUN * (3600.) / (oriphy::AU); // (AU/h)
+	constexpr double CRASH = 0.07; // 撞击阈值
+}
+
+// 这样做的另一个好处：天体撞击合并不会出现因数值过大未判断而穿过对方的情况
 
 class _obj // 天体
 {
@@ -27,11 +48,11 @@ public:
 	_type type;
 	double m; // 质量（视为质点）
 	_3dv pos, v, a; // 位置 速度 加速度
-	std::string id; // 名称（不建议重复，后续用户交互时设置限制）
+	std::string id; // 名称（不重复，用户交互设置限制）
 
 	// 构造函数
 
-	_obj() : type(STAR), m(SOLAR_MASS), pos(_3dv()), v(_3dv()), a(_3dv()), id("sun") {} // 不要使用这种方法初始化，否则面临重名风险
+	_obj() : type(STAR), m(phy::SOLAR_MASS), pos(_3dv()), v(_3dv()), a(_3dv()), id("sun") {} // 不要使用这种方法初始化，否则面临重名风险
 	_obj(_type type, double m, const _3dv& pos, const _3dv& v, const _3dv& a, const std::string& st) : type(type), m(m), pos(pos), v(v), a(a), id(st) {}
 	_obj(const _obj& o) : type(o.type), m(o.m), pos(o.pos), v(o.v), a(o.a), id(o.id) {}
 	~_obj() = default;
@@ -125,13 +146,12 @@ public:
 					continue;
 				_3dv r_ij = j.pos - i.pos;
 				double dist_2 = r_ij.mag_2();
-				if (r_ij.is_zero())
+				if (r_ij.mag() < phy::CRASH)
 				{
-					// 防止除以零，后续作状态检查时直接宣布天体相撞爆炸，结束模拟
 					available = false;
-					continue; // 合体了，不再计算引力
+					continue; // 合体，不再计算引力
 				}
-				i.a += (G * j.m / dist_2) * r_ij._e();
+				i.a += (phy::G * j.m / dist_2) * r_ij._e();
 			}
 		}
 		return;
@@ -148,7 +168,7 @@ public:
 			{
 				for (size_t j = i + 1; j < objs.size(); ++j)
 				{
-					if (objs[i].pos.distance_2(objs[j].pos) < SMALL_NUM) // 距离过近
+					if (objs[i].pos.distance(objs[j].pos) < phy::CRASH) // 距离过近
 					{
 						_obj new_obj = objs[i] + objs[j];
 						objs.erase(objs.begin() + j);
@@ -191,7 +211,7 @@ public:
 		}
 		if (!flag || sun.type == PLANET)
 			return false;
-		double v = sqrt(G * sun.m / r);
+		double v = sqrt(phy::G * sun.m / r);
 		o.pos = sun.pos + _3dv(r, 0, 0);
 		o.v = sun.v + _3dv(0, v, 0);
 		o.a = _3dv();
@@ -210,8 +230,8 @@ public:
 			{
 				double dist = objs[i].pos.distance(objs[j].pos);
 				if (dist < SMALL_NUM)
-					continue; // 防止除以零
-				ep -= G * objs[i].m * objs[j].m / dist;
+					continue; // 防止除以零，不过这个跟合并无关
+				ep -= phy::G * objs[i].m * objs[j].m / dist;
 			}
 		}
 		return ek + ep;
@@ -221,7 +241,7 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, _state& s) // 输出流
 	{
-		os << "State at time " << s.time << " s:" << std::endl;
+		os << "State at time " << s.time << " h:" << std::endl;
 		for (const _obj& o : s.objs)
 		{
 			os << "  " << o << std::endl;

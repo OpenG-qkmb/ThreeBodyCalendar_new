@@ -50,17 +50,17 @@ void test_intrg_two_body_comp()
 	constexpr int N = 3;
 	_state solar_sys, sys;
 	long double t0, t1, e0 = 0, e1 = 0;
-	const double v_earth = sqrt(G * SOLAR_MASS / AU); // 计算地球公转速度大小
+	const double v_earth = sqrt(phy::G * phy::SOLAR_MASS / phy::AU); // 计算地球公转速度大小
 	const std::string method[N] = {"Euler", "Verlet", "RK4"};
-	solar_sys.add(_obj(STAR, SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
-	solar_sys.add(_obj(PLANET, EARTH_MASS, _3dv(AU, 0, 0), _3dv(0, v_earth, 0), _3dv(0), "earth"));
+	solar_sys.add(_obj(STAR, phy::SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
+	solar_sys.add(_obj(PLANET, phy::EARTH_MASS, _3dv(phy::AU, 0, 0), _3dv(0, v_earth, 0), _3dv(0), "earth"));
 	solar_sys.set_a();
 	e0 = solar_sys.get_energy();
 	for (int i = 0; i < N; ++i)
 	{
 		sys = solar_sys;
 		t0 = gettime();
-		state_goto(sys, DAY_SECONDS * 30.0, 3600.0, method[i]);
+		state_goto(sys, phy::DAY * 30.0, 1., method[i]);
 		t1 = gettime() - t0;
 		e1 = sys.get_energy();
 		std::cout << _LINE << std::endl << method[i] << ":" << std::endl << sys
@@ -75,16 +75,16 @@ void test_intrg_two_body_timeline()
 {
 	std::cout << "[Test]: Two-body problem (Earth orbiting the Sun)]" << std::endl;
 	_state sys;
-	const double v_earth = sqrt(G * SOLAR_MASS / AU);
-	double e0 = 0, e1 = 0, dt = 3600;
-	int steps = static_cast<int>(24 * STD_YEAR);
-	sys.add(_obj(STAR, SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
-	sys.add(_obj(PLANET, EARTH_MASS, _3dv(AU, 0, 0), _3dv(0, v_earth, 0), _3dv(0), "earth"));
+	const double v_earth = sqrt(phy::G * phy::SOLAR_MASS / phy::AU);
+	double e0 = 0, e1 = 0, dt = 1.;
+	int steps = static_cast<int>(phy::YEAR);
+	sys.add(_obj(STAR, phy::SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
+	sys.add(_obj(PLANET, phy::EARTH_MASS, _3dv(phy::AU, 0, 0), _3dv(0, v_earth, 0), _3dv(0), "earth"));
 	sys.set_a();
 	e0 = sys.get_energy();
 	while (steps--)
 	{
-		integrate_dt_a(sys, dt, "verlet");
+		integrate_dt(sys, dt, "verlet");
 		e1 = sys.get_energy();
 		std::cout << "---------" << std::endl << sys
 			<< "Energy: " << e1 << "   "
@@ -97,12 +97,12 @@ void test_intrg_merge() // FAILED
 {
 	std::cout << std::endl << "[Test]: Merge (Earth dropping into the Sun)]" << std::endl;
 	_state test_sys;
-	double v_earth = sqrt(G * SOLAR_MASS / AU);
-	test_sys.add(_obj(STAR, SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
-	test_sys.add(_obj(PLANET, EARTH_MASS, _3dv(AU, 0, 0), _3dv(0, 0, 0), _3dv(0), "earth"));
+	// double v_earth = sqrt(phy::G * phy::SOLAR_MASS / phy::AU);
+	test_sys.add(_obj(STAR, phy::SOLAR_MASS, _3dv(0), _3dv(0), _3dv(0), "sun"));
+	test_sys.add(_obj(PLANET, phy::EARTH_MASS, _3dv(phy::AU, 0, 0), _3dv(0, 0, 0), _3dv(0), "earth"));
 	test_sys.set_a();
 	std::cout << _LINE << std::endl << "Before:" << std::endl << test_sys << std::endl;
-	state_goto(test_sys, DAY_SECONDS * STD_YEAR , 60, "verlet");
+	state_goto(test_sys, phy::YEAR , 60, "verlet");
 	test_sys.merge_compulsory();
 	std::cout << _LINE << std::endl << "After:" << std::endl << test_sys << std::endl;
 	return;
