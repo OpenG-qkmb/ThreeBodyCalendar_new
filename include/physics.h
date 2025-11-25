@@ -37,7 +37,7 @@ namespace phy
 	constexpr double SOLAR_MASS = oriphy::SOLAR_MASS / oriphy::EARTH_MASS; // = 333445.0964 (EARTH_MASS)
 	constexpr double G = oriphy::G * (3600. * 3600.) * (oriphy::EARTH_MASS) / (oriphy::AU * oriphy::AU * oriphy::AU); // (AU³/EARTH_MASS/h²)
 	constexpr double V_SUN = oriphy::V_SUN * (3600.) / (oriphy::AU); // (AU/h)
-	constexpr double CRASH = 0.07; // 撞击阈值
+	constexpr double CRASH = 0.09; // 撞击阈值
 }
 
 // 这样做的另一个好处：天体撞击合并不会出现因数值过大未判断而穿过对方的情况

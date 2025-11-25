@@ -41,18 +41,6 @@
 // 
 // start/begin
 
-//class _prompt
-//{
-//public:
-//	const std::map<int, std::string> PROMPT_LIST = { // int p_id, std::string prompt
-//		{-1, "Invalid input"},
-//		{0, "[Error] "},
-//		{1, "Initialize and start to simulate. See README.md for help."},
-//		{2, "Initialization completed."},
-//		{3, "wtf"}
-//	};
-//};
-
 typedef std::queue<std::string>  _Q;
 
 class _user
@@ -254,7 +242,7 @@ public:
 
 			if (isrand)
 			{
-				sample.pos = rand_v(phy::AU * 100);
+				sample.pos = rand_v(phy::AU * 50); // π√«“œ»’‚√¥øº¬«
 				sample.v = rand_v(phy::V_SUN * 10);
 				sample.a = _3dv();
 				state.add(sample);
