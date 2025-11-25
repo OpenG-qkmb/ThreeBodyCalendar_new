@@ -36,7 +36,7 @@
 // step <dt (= 3600s in simulation)> <steps (between every output, = 3s in real world)>
 // method <method (= euler/verlet/rk4)>
 // print2screen (default) / print2file <filename> (default: output_<time>.txt)
-// timelen <total_time (= 100y)>
+// timelen <total_time (= 1y)>
 // timelen unlimited
 // 
 // start/begin
@@ -60,6 +60,11 @@ class _user
 private:
 	
 	const char* _INVALID = "[Error] Invalid input.";
+
+	inline int mymin(const int& a, const int& b) const
+	{
+		return (a < b) ? a : b;
+	}
 
 	void _clear(_Q& q)
 	{
@@ -124,7 +129,7 @@ public:
 
 	double dt = 3600, steps = 3;
 	std::string method = "verlet";
-	double timelen = STD_YEAR * DAY_SECONDS * 100;
+	double timelen = STD_YEAR * DAY_SECONDS;
 	bool unlimited = false;
 
 	
@@ -164,6 +169,13 @@ public:
 			catch (...)
 			{
 				std::cerr << "[Error] Cannot open the file." << std::endl;
+				filename.clear();
+				goto read_filename;
+			}
+			if(!fin.is_open())
+			{
+				std::cerr << "[Error] No such file." << std::endl;
+				filename.clear();
 				goto read_filename;
 			}
 		}
@@ -238,7 +250,6 @@ public:
 
 			if (isrand)
 			{
-				srand(time(NULL));
 				sample.pos = rand_v(AU * 100);
 				sample.v = rand_v(V_SUN);
 				sample.a = _3dv();
@@ -307,7 +318,7 @@ public:
 				state.add(sample);
 			}
 		} while (true);
-		if (s)
+		if (fin.is_open())
 			fin.close();
 		state.merge_compulsory();
 		return;
@@ -409,6 +420,8 @@ public:
 	{
 		_Q q;
 		
+		srand(time(NULL));
+
 		// initialize
 		std::cout << "[Tip] Initialize before simulation. See README.md for help." << std::endl;
 	start_initialize:
@@ -447,11 +460,13 @@ public:
 		// settings
 		do
 		{
-			bool success = false;
+			bool success = false, jump = false;
+			if (!q.empty() && q.front().back() == 't')
+				break;
 			switch (q.front().front())
 			{
 			case 'b':
-			case 'e':
+			case 'e': jump = true; // don't break
 			case 'a': success = true; break;
 			case 's': q.pop(); success = setsteps(q); break;
 			case 'm': q.pop(); success = setmethod(q); break;
@@ -460,10 +475,12 @@ public:
 			}
 			if (!success)
 				std::cerr << _INVALID << std::endl;
+			if (jump)
+				break;
 			q = _get();
 			if (q.front() == "start")
 				break;
-		} while (q.front() != "start" && q.front().front() != 'b' && q.front().front() != 'e');
+		} while (q.front().back() != 't' && q.front().front() != 'b' && q.front().front() != 'e');
 		return;
 	}
 
