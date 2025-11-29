@@ -37,12 +37,12 @@ if(WIN32)
     target_link_libraries(ThreeBodyCalendar
         kernel32 user32 gdi32 winspool shell32 ole32 oleaut32 uuid comdlg32 advapi32
     )
-endif()
 
-# 防止控制台窗口被禁用
-set_target_properties(ThreeBodyCalendar PROPERTIES
-    LINK_FLAGS "/SUBSYSTEM:CONSOLE"
-)
+    # 防止控制台窗口被禁用
+    # set_target_properties(ThreeBodyCalendar PROPERTIES
+    # LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+    # )
+endif()
 
 # 编译器选项
 if(MSVC)
