@@ -13,12 +13,36 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # 包含目录
 include_directories(include)
 
+# 自动下载和配置EGE库
+# include(FetchContent)
+# FetchContent_Declare(
+#     ege
+#     URL https://github.com/wysaid/xege/archive/refs/heads/master.zip
+#     # Gitee镜像：https://gitee.com/mirrors/ege
+# )
+# FetchContent_MakeAvailable(ege)
+
 # 添加可执行文件
 add_executable(ThreeBodyCalendar
     src/main.cpp
     
     # 其他源文件将逐步添加
- "include/test.h" "include/integrator.h" "include/physics.h" "include/user.h")
+ "include/3dv.h" "include/test.h" "include/integrator.h" "include/physics.h" "include/user.h" "include/visual.h" "src/3dv.cpp" "src/physics.cpp" "src/integrator.cpp" "src/user.cpp" "src/test.cpp")
+
+# 与EGE库链接
+# target_link_libraries(ThreeBodyCalendar graphics)
+
+# 在Windows上链接必要的系统库
+if(WIN32)
+    target_link_libraries(ThreeBodyCalendar
+        kernel32 user32 gdi32 winspool shell32 ole32 oleaut32 uuid comdlg32 advapi32
+    )
+endif()
+
+# 防止控制台窗口被禁用
+set_target_properties(ThreeBodyCalendar PROPERTIES
+    LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+)
 
 # 编译器选项
 if(MSVC)
