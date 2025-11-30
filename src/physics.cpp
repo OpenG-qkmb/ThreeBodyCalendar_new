@@ -188,17 +188,17 @@ double _state::get_energy() // 获取系统总能量
 	return ek + ep;
 }
 
-_obj _state::get_analyse_obj() const
+_obj& _state::get_analyse_obj()
 {
 	try
 	{
 		_obj o = analyse_obj.get();
-		return o;
 	}
 	catch (...)
 	{
 		return NULL_OBJ;
 	}
+	return analyse_obj.get();
 }
 
 // 运算符重载

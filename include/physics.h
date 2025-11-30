@@ -102,7 +102,7 @@ public:
 
 	double get_energy(); // 获取系统总能量
 
-	_obj get_analyse_obj() const;
+	_obj& get_analyse_obj();
 
 	// 运算符重载
 
