@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <functional>
 #include "3dv.h"
 #include "physics.h"
 
@@ -79,7 +80,7 @@ _3dv _user::rand_v_new(double mark)
 {
 	if (!rand_init)
 	{
-		gen = std::mt19937(static_cast<unsigned int>(time(NULL)));
+		gen = std::mt19937(rd());
 		rand_init = true;
 	}
 	std::uniform_real_distribution<double> dist(-mark, mark);
@@ -102,6 +103,7 @@ void _user::initialize(_state& state, const char& mode)
 	read_filename:
 		do
 		{
+			
 			q = _get();
 			if (q.front().front() != 'i' || q.size() < 2)
 			{
@@ -175,7 +177,7 @@ void _user::initialize(_state& state, const char& mode)
 		switch (q.front().front())
 		{
 		case 'p':
-		case 'e': sample.type = PLANET; break;
+		case 'e': sample.type = PLANET; is_planet_added = true; break;
 		default: sample.type = STAR;
 		}
 		q.pop();
@@ -378,11 +380,34 @@ bool _user::set_tlen(_Q& q)
 	return true;
 }
 
+bool _user::set_analyse_id(_state& state, _Q& q)
+{
+	if (q.empty())
+		return false;
+	while (!q.empty())
+	{
+		analyse_id += q.front() + " ";
+		q.pop();
+	}
+	analyse_id.pop_back();
+	for (int i = 0; i < state.objs.size(); ++i) // NO ITERATOR
+	{
+		if (state.objs[i].id == analyse_id && state.objs[i].type == PLANET)
+		{
+			state.analyse_obj = std::ref(state.objs[i]);
+			/*std::cerr << "[Info] Added!" << std::endl << state.analyse_obj.get() << std::endl;*/
+			return true;
+		}
+	}
+	analyse_id.clear();
+	return false;
+}
+
 void _user::read_cmd(_state& state/*, bool put_prompt = true*/)
 {
 	_Q q;
 	bool console = true;
-
+	char mode = '\0';
 	// srand(static_cast<unsigned int>(time(NULL)));
 
 	// initialize
@@ -390,6 +415,8 @@ void _user::read_cmd(_state& state/*, bool put_prompt = true*/)
 start_initialize:
 	do
 	{
+		if (mode != '\0')
+			break;
 		_clear(q);
 		q = _get();
 		if (q.empty())
@@ -410,12 +437,19 @@ start_initialize:
 	} while (true);
 	if (!console)
 		return;
-	switch (q.front().front())
+	if (mode == '\0')
+		mode = q.front().front();
+	switch (mode)
 	{
 	case 'm':
 	case 'r':
-	case 's': initialize(state, q.front().front()); break;
+	case 's': initialize(state, mode); break;
 	default: std::cerr << _INVALID << std::endl; goto start_initialize;
+	}
+	if (!is_planet_added)
+	{
+		std::cerr << "[Error] No PLANET has yet been added to the system." << std::endl;
+		goto start_initialize;
 	}
 
 	std::cout << "[Tip] Confirm settings before simulation. See README.md for help." << std::endl;
@@ -427,6 +461,9 @@ start_initialize:
 		q = _get();
 	} while (q.front().front() == 'e');
 
+	bool analyse_set = false;
+
+settings:
 
 	// settings
 	do
@@ -437,8 +474,8 @@ start_initialize:
 		switch (q.front().front())
 		{
 		case 'b':
-		case 'e': jump = true; // don't break
-		case 'a': success = true; break;
+		case 'e': jump = true; success = true; break;
+		case 'a': q.pop(); success = analyse_set = set_analyse_id(state, q); break; // already changed to "analyse_id"
 		case 's': q.pop(); success = setsteps(q); break;
 		case 'm': q.pop(); success = setmethod(q); break;
 		case 'p': /*don't pop*/ success = setp(q); break;
@@ -450,6 +487,24 @@ start_initialize:
 			break;
 		q = _get();
 	} while (q.front().back() != 't' && q.front().front() != 'b' && q.front().front() != 'e');
+	if (!analyse_set)
+	{
+		if (!is_planet_added)
+		{
+			std::cerr << "[Error] No PLANET has yet been added for analysis. Restart the program to address this issue." << std::endl;
+			q = _get();
+			goto settings;
+		}
+		for (int i = 0; i < state.objs.size(); ++i) // NO ITERATOR
+		{
+			if (state.objs[i].type == PLANET)
+			{
+				state.analyse_obj = std::ref(state.objs[i]);
+				analyse_set = true;
+				break;
+			}
+		}
+	}
 	finished = true;
 	return;
 }

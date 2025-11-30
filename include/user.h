@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <functional>
 #include "3dv.h"
 #include "physics.h"
 
@@ -32,12 +33,12 @@
 // import <filename> (file format should be identical to the "initialize -manual" section)
 // <end initialize> (don't type this line when importing from file)
 // 
-// auto (default)
 // step <dt (= 1h in simulation)> <steps (between every output, = 1h)>
 // method <method (= euler/verlet/rk4)>
 // print2screen (default) / print2file <filename>
 // timelen <total_time (= 1y)>
 // timelen unlimited
+// analyse <id>
 // 
 // start/begin
 
@@ -49,7 +50,7 @@ private:
 	
 	const char* _INVALID = "[Error] Invalid input.";
 
-	bool rand_init = false;
+	bool rand_init = false, is_planet_added = false;
 	std::random_device rd;
 	std::mt19937 gen;
 
@@ -68,22 +69,23 @@ public:
 	std::ofstream fout;
 
 	double dt = 1., steps = 1.;
-	std::string method = "verlet";
+	std::string method = "verlet", analyse_id = "";
 	double timelen = phy::YEAR;
 	bool unlimited = false, finished = false;
-
 	
+
 	void initialize(_state& state, const char& mode);
 	bool setsteps(_Q& q);
 	bool setmethod(_Q& q);
 	bool setp(_Q& q);
 	bool set_tlen(_Q& q);
+	bool set_analyse_id(_state& state, _Q& q);
 	void read_cmd(_state& state/*, bool put_prompt = true*/);
 
 	_user()
 	{
 		srand(static_cast<unsigned int>(time(NULL)));
-		gen = std::mt19937(static_cast<unsigned int>(time(NULL)));
+		gen = std::mt19937(rd());
 		rand_init = true;
 	}
 	~_user()

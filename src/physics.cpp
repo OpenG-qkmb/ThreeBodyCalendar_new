@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <functional>
 
 // _obj
 
@@ -98,9 +99,32 @@ void _state::merge() // 合并相撞天体
 				if (objs[i].pos.distance(objs[j].pos) < phy::CRASH) // 距离过近
 				{
 					_obj new_obj = objs[i] + objs[j];
+					bool analyse_obj_tag = true;
+					try
+					{
+						_obj rubbish = analyse_obj.get();
+					}
+					catch (...)
+					{
+						obj_still_exist = false;
+						analyse_obj_tag = false;
+					}
+					if (analyse_obj_tag && analyse_obj.get() == NULL_OBJ)
+					{
+						obj_still_exist = false;
+						analyse_obj_tag = false;
+					}
+					if (analyse_obj_tag && (analyse_obj.get() == objs[i] || analyse_obj.get() == objs[j]))
+					{
+						obj_still_exist = false;
+					}
 					objs.erase(objs.begin() + j);
 					objs.erase(objs.begin() + i);
 					objs.push_back(new_obj);
+					if (analyse_obj_tag)
+					{
+						analyse_obj = std::ref(objs.back());
+					}
 					tag = true;
 					break;
 				}
@@ -164,11 +188,25 @@ double _state::get_energy() // 获取系统总能量
 	return ek + ep;
 }
 
+_obj _state::get_analyse_obj() const
+{
+	try
+	{
+		_obj o = analyse_obj.get();
+		return o;
+	}
+	catch (...)
+	{
+		return NULL_OBJ;
+	}
+}
+
 // 运算符重载
 
 std::ostream& operator<<(std::ostream& os, _state& s) // 输出流
 {
-	os << "State at time " << s.time << " h:" << std::endl;
+	os << "Object under analysis: " << s.get_analyse_obj().id << std::endl
+		<< "State at time " << s.time << " h:" << std::endl << std::endl;
 	for (const _obj& o : s.objs)
 	{
 		os << "  " << o << std::endl;

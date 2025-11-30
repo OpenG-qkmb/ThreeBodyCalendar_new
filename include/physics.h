@@ -7,6 +7,7 @@
 #include "3dv.h"
 #include <vector>
 #include <string>
+#include <functional>
 #include <cmath>
 
 enum _type{STAR, PLANET}; // 恒星 行星
@@ -52,7 +53,7 @@ public:
 
 	// 构造函数
 
-	_obj() : type(STAR), m(phy::SOLAR_MASS), pos(_3dv()), v(_3dv()), a(_3dv()), id("sun") {} // 不要使用这种方法初始化，否则面临重名风险
+	_obj() : type(STAR), m(phy::SOLAR_MASS), pos(_3dv()), v(_3dv()), a(_3dv()), id("sun_default_NULL_OBJ") {} // 不要使用这种方法初始化，否则面临重名风险
 	_obj(_type type, double m, const _3dv& pos, const _3dv& v, const _3dv& a, const std::string& st) : type(type), m(m), pos(pos), v(v), a(a), id(st) {}
 	_obj(const _obj& o) : type(o.type), m(o.m), pos(o.pos), v(o.v), a(o.a), id(o.id) {}
 	~_obj() = default;
@@ -71,8 +72,10 @@ class _state
 {
 public:
 	std::vector<_obj> objs;
+	_obj NULL_OBJ; // 空天体
 	double time;
-	bool available = true; // 状态是否有效（天体未相撞）
+	bool available = true, obj_still_exist = true; // 状态是否有效（天体未相撞）
+	std::reference_wrapper<_obj> analyse_obj = std::ref(NULL_OBJ);
 
 	// 构造函数
 
@@ -98,6 +101,8 @@ public:
 	bool orbit_me(std::string sunid, _obj& o, double r);
 
 	double get_energy(); // 获取系统总能量
+
+	_obj get_analyse_obj() const;
 
 	// 运算符重载
 
