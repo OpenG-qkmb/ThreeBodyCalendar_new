@@ -7,8 +7,9 @@
 #include "3dv.h"
 #include <vector>
 #include <string>
-#include <functional>
 #include <cmath>
+#include <functional>
+#include <algorithm>
 
 enum _type{STAR, PLANET}; // 恒星 行星
 
@@ -24,6 +25,7 @@ namespace oriphy
 	constexpr double DAY_SECONDS = 86400.;  // 一天的秒数
 	constexpr double STD_YEAR = 365.25;      // 一年的天数
 	constexpr double V_SUN = 22000.;        // 太阳系绕银河系中心公转速度 (m/s)
+	constexpr double PI = 3.14159265358979323846;
 }
 
 // 事实是：使用上面这样带原始单位的物理量作模拟，性能较差且不易于交互，故作如下处理：
@@ -39,6 +41,7 @@ namespace phy
 	constexpr double G = oriphy::G * (3600. * 3600.) * (oriphy::EARTH_MASS) / (oriphy::AU * oriphy::AU * oriphy::AU); // (AU³/EARTH_MASS/h²)
 	constexpr double V_SUN = oriphy::V_SUN * (3600.) / (oriphy::AU); // (AU/h)
 	constexpr double CRASH = 0.09; // 撞击阈值
+	constexpr double PI = oriphy::PI;
 }
 
 // 这样做的另一个好处：天体撞击合并不会出现因数值过大未判断而穿过对方的情况
@@ -54,6 +57,7 @@ public:
 	// 构造函数
 
 	_obj() : type(STAR), m(phy::SOLAR_MASS), pos(_3dv()), v(_3dv()), a(_3dv()), id("sun_default_NULL_OBJ") {} // 不要使用这种方法初始化，否则面临重名风险
+	_obj(const std::string id) : type(STAR), m(phy::SOLAR_MASS), pos(_3dv()), v(_3dv()), a(_3dv()), id(id) {}
 	_obj(_type type, double m, const _3dv& pos, const _3dv& v, const _3dv& a, const std::string& st) : type(type), m(m), pos(pos), v(v), a(a), id(st) {}
 	_obj(const _obj& o) : type(o.type), m(o.m), pos(o.pos), v(o.v), a(o.a), id(o.id) {}
 	~_obj() = default;
@@ -91,7 +95,7 @@ public:
 	// 有关操作
 
 	size_t size() const;
-	bool isexist(std::string uid) const;
+	bool isexist(std::string id) const;
 	void add(const _obj& o);
 
 	void set_a(); // 设置加速度
@@ -108,6 +112,26 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, _state& s); // 输出流
 
+
+	// 判断轨道运行状态的有关基础方法
+
+	double get_orbit_energy(const _obj& o); // 相对于给定的analyse_obj
+	double get_orbit_energy(const std::string& id); // 重载
+
+	_3dv get_angmom(const _obj& o); // 角动量
+	_3dv get_angmom(const std::string& id);
+
+	double get_semi_a(const _obj& o); // 半长轴
+	double get_semi_a(const std::string& id);
+
+	_3dv get_eccent(const _obj& o); // 离心率矢量
+	_3dv get_eccent(const std::string& id);
+
+	double get_T(const _obj& o); // 周期
+	double get_T(const std::string& id);
+
+	double get_hill_radius(const _obj& thisobj, const _obj& thatobj); // 希尔半径
+	double get_hill_radius(const std::string& id1, const std::string& id2);
 };
 
 #endif

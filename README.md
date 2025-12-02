@@ -4,6 +4,8 @@
 
 This project is intended for submission as a project for the Computer Programming course. It aims to simulate the three-body motion of any given parameters, generating a perpetual calendar for a planet orbiting a specific star.
 
-# 记得添加EGE库
+<!--# 记得添加EGE库
 
 See [https://xege.org/](https://xege.org/) for help.
+
+（说明：可视化后续有时间做，现在先完成基本功能）-->

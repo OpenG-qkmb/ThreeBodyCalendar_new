@@ -5,6 +5,7 @@
 #include <string>
 #include <cmath>
 #include <functional>
+#include <algorithm>
 
 // _obj
 
@@ -49,11 +50,11 @@ size_t _state::size() const
 {
 	return objs.size();
 }
-bool _state::isexist(std::string uid) const
+bool _state::isexist(std::string id) const
 {
 	for (const _obj& o : objs)
 	{
-		if (o.id == uid)
+		if (o.id == id)
 			return true;
 	}
 	return false;
@@ -213,4 +214,112 @@ std::ostream& operator<<(std::ostream& os, _state& s) // 输出流
 	}
 	os << "Energy: " << s.get_energy() << std::endl;
 	return os;
+}
+
+
+// 判断轨道运行状态的有关基础方法
+
+double _state::get_orbit_energy(const _obj& o) // 相对于给定的analyse_obj
+{
+	_3dv r(0), v(0);
+	_obj& anlys = get_analyse_obj();
+	if (anlys == NULL_OBJ)
+		return 0.;
+	r = anlys.pos - o.pos;
+	v = anlys.v - o.v;
+	return 0.5 * anlys.m * v.mag_2() - phy::G * anlys.m * o.m / r.mag();
+}
+double _state::get_orbit_energy(const std::string& id) // 重载
+{
+	auto it = std::find(objs.begin(), objs.end(), _obj(id));
+	if (it == objs.end())
+		return 0.;
+	return get_orbit_energy(*it);
+}
+
+_3dv _state::get_angmom(const _obj& o) // 角动量
+{
+	_obj& anlys = get_analyse_obj();
+	if (anlys == NULL_OBJ)
+		return _3dv(0);
+	_3dv r = anlys.pos - o.pos;
+	_3dv v = anlys.v - o.v;
+	return r.cross(anlys.m * v);
+}
+_3dv _state::get_angmom(const std::string& id)
+{
+	auto it = std::find(objs.begin(), objs.end(), _obj(id));
+	if (it == objs.end())
+		return _3dv(0);
+	return get_angmom(*it);
+}
+
+double _state::get_semi_a(const _obj& o) // 半长轴
+{
+	_obj& anlys = get_analyse_obj();
+	if (anlys == NULL_OBJ)
+		return 0.;
+	return -phy::G * anlys.m * o.m / (2.0 * get_orbit_energy(o));
+}
+double _state::get_semi_a(const std::string& id)
+{
+	auto it = std::find(objs.begin(), objs.end(), _obj(id));
+	if (it == objs.end())
+		return 0.;
+	return get_semi_a(*it);
+}
+
+_3dv _state::get_eccent(const _obj& o) // 离心率矢量
+{
+	_obj& anlys = get_analyse_obj();
+	if (anlys == NULL_OBJ)
+		return _3dv(0);
+	_3dv r = anlys.pos - o.pos, v = anlys.v - o.v;
+	_3dv e = v.cross(get_angmom(o)) / (phy::G * anlys.m * o.m) - r._e();
+	return e;
+}
+_3dv _state::get_eccent(const std::string& id)
+{
+	auto it = std::find(objs.begin(), objs.end(), _obj(id));
+	if (it == objs.end())
+		return _3dv(0);
+	return get_eccent(*it);
+}
+
+double _state::get_T(const _obj& o) // 周期
+{
+	_obj& anlys = get_analyse_obj();
+	if (anlys == NULL_OBJ)
+		return 0.;
+	double a = get_semi_a(o);
+	if (a <= 0.)
+		return 0.;
+	return 2.0 * phy::PI * std::sqrt(a * a * a / (phy::G * o.m));
+}
+double _state::get_T(const std::string& id)
+{
+	auto it = std::find(objs.begin(), objs.end(), _obj(id));
+	if (it == objs.end())
+		return 0.;
+	return get_T(*it);
+}
+
+double _state::get_hill_radius(const _obj& thisobj, const _obj& thatobj) // 希尔半径
+{
+	if (get_analyse_obj() == NULL_OBJ)
+		return 0.;
+	double a = get_semi_a(thisobj);
+	if (a <= 0.)
+		return 0.;
+	return a * (1 - get_eccent(thisobj).mag()) * std::cbrt(thisobj.m / (3.0 * thatobj.m));
+}
+double _state::get_hill_radius(const std::string& id1, const std::string& id2)
+{
+	auto it1 = std::find(objs.begin(), objs.end(), _obj(id1));
+	if (it1 == objs.end())
+		return 0.;
+	auto it2 = std::find(objs.begin(), objs.end(), _obj(id2));
+	if (it2 == objs.end())
+		return 0.;
+	return get_hill_radius(*it1, *it2);
 }
