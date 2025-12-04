@@ -116,7 +116,7 @@ bool _3dv::is_zero() const
 	return iszero(x) && iszero(y) && iszero(z);
 }
 
-double _3dv::angle_with(const _3dv& v) const // 求夹角（弧度制）
+double _3dv::cos_angle_with(const _3dv& v) const // 求夹角（cos）
 {
 	double dot_prod = this->dot(v);
 	double mags = this->mag() * v.mag();
@@ -127,7 +127,11 @@ double _3dv::angle_with(const _3dv& v) const // 求夹角（弧度制）
 		cos_theta = 1.0;
 	if (cos_theta < -1.0)
 		cos_theta = -1.0;
-	return acos(cos_theta);
+	return cos_theta;
+}
+double _3dv::angle_with(const _3dv& v) const // 求夹角（弧度制）
+{
+	return acos(cos_angle_with(v));
 }
 _3dv _3dv::proj_onto(const _3dv& v) const // 向量投影
 {

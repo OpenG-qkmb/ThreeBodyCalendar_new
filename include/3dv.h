@@ -61,6 +61,7 @@ public:
 
 	// 向量求夹角、投影和反射
 
+	double cos_angle_with(const _3dv& v) const; // 求夹角（cos）
 	double angle_with(const _3dv& v) const; // 求夹角（弧度制）
 	_3dv proj_onto(const _3dv& v) const; // 向量投影
 	_3dv reflect(const _3dv& normal) const; // 向量反射（给出反射面之法向量）
