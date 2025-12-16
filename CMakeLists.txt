@@ -27,10 +27,16 @@ add_executable(ThreeBodyCalendar
     src/main.cpp
     
     # 其他源文件将逐步添加
- "include/3dv.h" "include/test.h" "include/integrator.h" "include/physics.h" "include/user.h" "include/visual.h" "src/3dv.cpp" "src/physics.cpp" "src/integrator.cpp" "src/user.cpp" "src/test.cpp" "include/calendar.h" "src/calendar.cpp")
+ "include/3dv.h" "include/test.h" "include/integrator.h" "include/physics.h" "include/user.h" "include/visual.h" "src/3dv.cpp" "src/physics.cpp" "src/integrator.cpp" "src/user.cpp" "src/test.cpp" "include/calendar.h" "src/calendar.cpp"  )
 
 # 与EGE库链接
 # target_link_libraries(ThreeBodyCalendar graphics)
+
+# OpenMP
+if(OPENMP_FOUND)
+    target_compile_options(my_project PRIVATE ${OpenMP_CXX_FLAGS})
+    target_link_libraries(my_project PRIVATE ${OpenMP_CXX_LIBRARIES})
+endif()
 
 # 在Windows上链接必要的系统库
 if(WIN32)

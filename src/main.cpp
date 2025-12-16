@@ -56,9 +56,7 @@ int main()
 		}
 	}
 	
-
 	// 以上勿改：可视化后如不显示控制台，则控制台IO重定向至文件
-
 
 	// test
 
@@ -69,33 +67,27 @@ int main()
 			if (user.screen_print)
 			{
 				std::cout << state << std::endl;
-				for (_obj& o : state.objs)
-				{
-					if (o.type == PLANET || o == state.get_analyse_obj() || state.get_orbit_energy(o) > 0)
-						continue;
-					std::cout << "Orbiting object: " << o.id << std::endl;
-					std::cout << "  Orbital energy: " << state.get_orbit_energy(o) << std::endl
-						<< "  Angular momentum: " << state.get_angmom(o) << std::endl
-						<< "  Semi-major axis: " << state.get_semi_a(o) << std::endl
-						<< "  Eccentricity: " << state.get_eccent(o).mag() << std::endl
-						<< "  Period: " << state.get_T(o) << std::endl;
-				}
+				// _obj _ = state.get_sun();
+				//std::cout << "deltaEnergy%: " << (state.get_energy() - e0) / e0 << std::endl;
 				std::cout << _LINE_LONG << std::endl;
+				
 			}
 			if (user.fout.is_open())
 			{
 				user.fout << state << std::endl;
-				for (_obj& o : state.objs)
-				{
-					if (o.type == PLANET || o == state.get_analyse_obj() || state.get_orbit_energy(o) > 0)
-						continue;
-					user.fout << "Orbiting object: " << o.id << std::endl;
-					user.fout << "  Orbital energy: " << state.get_orbit_energy(o) << std::endl
-						<< "  Angular momentum: " << state.get_angmom(o) << std::endl
-						<< "  Semi-major axis: " << state.get_semi_a(o) << std::endl
-						<< "  Eccentricity: " << state.get_eccent(o).mag() << std::endl
-						<< "  Period: " << state.get_T(o) << std::endl;
-				}
+				//user.fout << "deltaEnergy%: " << (state.get_energy() - e0) / e0 << std::endl;
+				// for (_obj& o : state.objs)
+				// {
+				// 	if (o.type == PLANET || o == state.get_analyse_obj() || state.get_orbit_energy(o) > 0)
+				// 		continue;
+				// 	user.fout << "Orbiting object: " << o.id << std::endl;
+				// 	user.fout << "  Orbital energy: " << state.get_orbit_energy(o) << std::endl
+				// 		<< "  Angular momentum: " << state.get_angmom(o) << std::endl
+				// 		<< "  Semi-major axis: " << state.get_semi_a(o) << std::endl
+				// 		<< "  Eccentricity: " << state.get_eccent(o).mag() << std::endl
+				// 		<< "  Period: " << state.get_T(o) << std::endl
+				// 		<< "  Cos_angle: " << (state.get_analyse_obj().pos - o.pos).cos_angle_with(state.get_angmom(o)) << std::endl;
+				// }
 				user.fout << _LINE_LONG << std::endl;
 			}
 			time0 = /*time(NULL)*/state.time;

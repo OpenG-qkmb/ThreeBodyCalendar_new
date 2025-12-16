@@ -6,12 +6,15 @@
 #include <iostream>
 #include "3dv.h"
 #include <vector>
+#include <map>
 #include <string>
 #include <cmath>
 #include <functional>
 #include <algorithm>
 
 enum _type{STAR, PLANET}; // 恒星 行星
+
+// using _id_map_bool_list = std::map<std::string, bool>;
 
 // 常用常量
 
@@ -74,9 +77,12 @@ public:
 
 class _state
 {
+private:
+	//double rank_sun(const _obj& o, std::map<std::string, bool>& bool_list); // 为捕获的强度打分
 public:
 	std::vector<_obj> objs;
 	_obj NULL_OBJ; // 空天体
+	_obj NO_SUN_OBJ = _obj("NO_SUN_OBJ"); // 没有围绕时的返回值
 	double time;
 	bool available = true, obj_still_exist = true; // 状态是否有效（天体未相撞）
 	std::reference_wrapper<_obj> analyse_obj = std::ref(NULL_OBJ);
@@ -84,18 +90,13 @@ public:
 	// 构造函数
 
 	_state() : objs(), time(0.0), available(true) {}
-	/*_state(size_t size = 0)
-	*{
-	*	objs.resize(size);
-	*	time = 0.0;
-	*	available = true;
-	*}*/
 	~_state() = default;
 
 	// 有关操作
 
 	size_t size() const;
 	bool isexist(std::string id) const;
+	_obj& get_obj_by_id(const std::string& id);
 	void add(const _obj& o);
 
 	void set_a(); // 设置加速度
@@ -132,6 +133,11 @@ public:
 
 	double get_hill_radius(const _obj& thisobj, const _obj& thatobj); // 希尔半径
 	double get_hill_radius(const std::string& id1, const std::string& id2);
+
+	
+	// 判断轨道运行状态
+
+	//_obj& get_sun();
 };
 
 #endif

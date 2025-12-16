@@ -7,14 +7,19 @@
 #include <string>
 #include <string_view>
 #include <cstdlib>
+#include <omp.h>
 
 void euler_step(_state& state, double dt) // 欧拉法前进dt
 {
 	state.set_a();
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (_obj& o : state.objs)
 	{
-		o.v += o.a * dt;
-		o.pos += o.v * dt;
+#pragma omp critical
+		{
+			o.v += o.a * dt;
+			o.pos += o.v * dt;
+		}
 	}
 	state.time += dt;
 	state.set_a();
@@ -23,18 +28,27 @@ void euler_step(_state& state, double dt) // 欧拉法前进dt
 
 void verlet_step(_state& state, double dt) // 显式Verlet法前进dt，无需欧拉法初始化
 {
+
 	state.set_a();
 	std::queue<_3dv> a_old;
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (_obj& o : state.objs)
 	{
-		a_old.push(o.a);
-		o.pos += o.v * dt + o.a * (0.5 * dt * dt);
+#pragma omp critical
+		{
+			a_old.push(o.a);
+			o.pos += o.v * dt + o.a * (0.5 * dt * dt);
+		}
 	}
 	state.set_a();
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (_obj& o : state.objs)
 	{
-		o.v += (a_old.front() + o.a) * (0.5 * dt);
-		a_old.pop();
+#pragma omp critical
+		{
+			o.v += (a_old.front() + o.a) * (0.5 * dt);
+			a_old.pop();
+		}
 	}
 	state.time += dt;
 	state.set_a();
@@ -53,52 +67,84 @@ void rk4_step(_state& state, double dt) // RK4法前进dt（若需，考虑优化？）
 	std::vector<_3dv> k4_v(n), k4_a(n);
 	// k1 = state (original)
 	//state_copy.set_a();（先set_a再赋值）
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		k1_v[i] = state.objs[i].v;
-		k1_a[i] = state.objs[i].a;
+#pragma omp critical
+		{
+			k1_v[i] = state.objs[i].v;
+			k1_a[i] = state.objs[i].a;
+		}
 	}
 	// k2
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		state_copy.objs[i].pos += k1_v[i] * (0.5 * dt);
-		state_copy.objs[i].v += k1_a[i] * (0.5 * dt);
+#pragma omp critical
+		{
+			state_copy.objs[i].pos += k1_v[i] * (0.5 * dt);
+			state_copy.objs[i].v += k1_a[i] * (0.5 * dt);
+		}
 	}
 	state_copy.set_a();
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		k2_v[i] = state_copy.objs[i].v;
-		k2_a[i] = state_copy.objs[i].a;
+#pragma omp critical
+		{
+			k2_v[i] = state_copy.objs[i].v;
+			k2_a[i] = state_copy.objs[i].a;
+		}
 	}
 	// k3
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		state_copy.objs[i].pos += k2_v[i] * (0.5 * dt);
-		state_copy.objs[i].v += k2_a[i] * (0.5 * dt);
+#pragma omp critical
+		{
+			state_copy.objs[i].pos += k2_v[i] * (0.5 * dt);
+			state_copy.objs[i].v += k2_a[i] * (0.5 * dt);
+		}
 	}
 	state_copy.set_a();
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		k3_v[i] = state_copy.objs[i].v;
-		k3_a[i] = state_copy.objs[i].a;
+#pragma omp critical
+		{
+			k3_v[i] = state_copy.objs[i].v;
+			k3_a[i] = state_copy.objs[i].a;
+		}
 	}
 	// k4
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		state_copy.objs[i].pos += k3_v[i] * dt;
-		state_copy.objs[i].v += k3_a[i] * dt;
+#pragma omp critical
+		{
+			state_copy.objs[i].pos += k3_v[i] * dt;
+			state_copy.objs[i].v += k3_a[i] * dt;
+		}
 	}
 	state_copy.set_a();
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		k4_v[i] = state_copy.objs[i].v;
-		k4_a[i] = state_copy.objs[i].a;
+#pragma omp critical
+		{
+			k4_v[i] = state_copy.objs[i].v;
+			k4_a[i] = state_copy.objs[i].a;
+		}
 	}
 	// 得出结果
+#pragma omp parallel for num_threads(6) schedule(dynamic, 2)
 	for (size_t i = 0; i < n; ++i)
 	{
-		state.objs[i].pos += (k1_v[i] + 2.0 * k2_v[i] + 2.0 * k3_v[i] + k4_v[i]) * (dt / 6.0);
-		state.objs[i].v += (k1_a[i] + 2.0 * k2_a[i] + 2.0 * k3_a[i] + k4_a[i]) * (dt / 6.0);
+#pragma omp critical
+		{
+			state.objs[i].pos += (k1_v[i] + 2.0 * k2_v[i] + 2.0 * k3_v[i] + k4_v[i]) * (dt / 6.0);
+			state.objs[i].v += (k1_a[i] + 2.0 * k2_a[i] + 2.0 * k3_a[i] + k4_a[i]) * (dt / 6.0);
+		}
 	}
 	state.time += dt;
 	state.set_a();
