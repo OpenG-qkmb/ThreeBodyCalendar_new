@@ -79,28 +79,32 @@ void _state::add(const _obj& o)
 
 void _state::set_a() // 设置加速度
 {
-	for (_obj& i : objs)
+#pragma omp parallel for schedule(dynamic)
+	for (int i = 0; i < objs.size(); ++i)
 	{
-		i.a = _3dv(0);
-#pragma omp	parallel for reduction(+ : i.a)
-		for (_obj& j : objs)
+#pragma omp critical
 		{
-			_3dv add = _3dv(0);
-			if (i != j)
+			objs[i].a = _3dv(0);
+#pragma omp	parallel for reduction(+ : objs[i].a)
+			for (int j = 0; j < objs.size(); ++j)
 			{
-				_3dv r_ij = j.pos - i.pos;
-				double dist_2 = r_ij.mag_2();
-				if (r_ij.mag() < phy::CRASH)
+				_3dv add = _3dv(0);
+				if (i != j)
 				{
-					available = false;
-					// 合体，不再计算引力
+					_3dv r_ij = objs[j].pos - objs[i].pos;
+					double dist_2 = r_ij.mag_2();
+					if (r_ij.mag() < phy::CRASH)
+					{
+						available = false;
+						// 合体，不再计算引力
+					}
+					else
+					{
+						add = (phy::G * objs[j].m / dist_2) * r_ij._e();
+					}
 				}
-				else
-				{
-					add = (phy::G * j.m / dist_2) * r_ij._e();
-				}
+				objs[i].a += add;
 			}
-			i.a += add;
 		}
 	}
 	return;
@@ -113,7 +117,7 @@ void _state::merge() // 合并相撞天体
 	while (true)
 	{
 		bool tag = false;
-#pragma omp parallel for num_threads(8) schedule(dynamic, 3)
+#pragma omp parallel for schedule(dynamic)
 		for (size_t i = 0; i < objs.size(); ++i)
 		{
 			for (size_t j = i + 1; j < objs.size(); ++j)
@@ -194,9 +198,11 @@ double _state::get_energy() // 获取系统总能量
 {
 	merge(); // 合并，防止除以零
 	double ek = 0.0, ep = 0.0;
+#pragma omp parallel for reduction (+ : ek)
 	for (size_t i = 0; i < objs.size(); ++i)
 	{
-		ek += 0.5 * objs[i].m * objs[i].v.mag_2();
+		double add0 = 0.5 * objs[i].m * objs[i].v.mag_2();
+		ek += add0;
 #pragma omp parallel for reduction (- : ep)
 		for (size_t j = i + 1; j < objs.size(); ++j)
 		{
