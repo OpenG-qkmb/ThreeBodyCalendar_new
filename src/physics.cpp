@@ -54,6 +54,15 @@ std::ostream& operator<<(std::ostream& os, const _obj& o) // 输出流
 
 // _state
 
+bool _state::operator==(const _state& s)
+{
+	return state_ver == s.state_ver;
+}
+bool _state::operator!=(const _state& s)
+{
+	return !(*this == s);
+}
+
 size_t _state::size() const
 {
 	return objs.size();
@@ -239,7 +248,7 @@ std::ostream& operator<<(std::ostream& os, _state& s) // 输出流
 	{
 		os << "  " << o << std::endl;
 	}
-	os << "Energy: " << s.get_energy() << std::endl;
+	// os << "Energy: " << s.get_energy() << std::endl; // 能量守恒已验证
 	return os;
 }
 

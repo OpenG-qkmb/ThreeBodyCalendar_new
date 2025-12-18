@@ -40,7 +40,7 @@ public:
 	bool operator==(const _3dv& v) const;
 	bool operator!=(const _3dv& v) const;
 	friend std::ostream& operator<<(std::ostream& os, const _3dv& v); // 输出流
-
+	
 	// 常见运算
 
 	double dot(const _3dv& v) const; // 点积

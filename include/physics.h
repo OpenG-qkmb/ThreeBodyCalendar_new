@@ -78,6 +78,7 @@ public:
 class _state
 {
 private:
+	int state_ver = -1;
 	//double rank_sun(const _obj& o, std::map<std::string, bool>& bool_list); // 为捕获的强度打分
 public:
 	std::vector<_obj> objs;
@@ -89,8 +90,14 @@ public:
 
 	// 构造函数
 
-	_state() : objs(), time(0.0), available(true) {}
+	_state(const int& ver) : objs(), time(0.0), available(true), state_ver(ver) {}
+	_state() : objs(), time(0.0), available(true), state_ver(-1) {}
 	~_state() = default;
+
+	// 运算符重载
+
+	bool operator==(const _state& s);
+	bool operator!=(const _state& s);
 
 	// 有关操作
 

@@ -294,7 +294,7 @@ bool _user::setsteps(_Q& q)
 		return false;
 	try
 	{
-		dt = std::stod(q.front());
+		sample_dt = std::stod(q.front());
 	}
 	catch (...)
 	{
@@ -488,7 +488,7 @@ settings:
 		q = _get();
 	} while (q.front().back() != 't' && q.front().front() != 'b' && q.front().front() != 'e');
 	if (!analyse_set)
-	{
+	{      
 		if (!is_planet_added)
 		{
 			std::cerr << "[Error] No PLANET has yet been added for analysis. Restart the program to address this issue." << std::endl;
@@ -505,6 +505,9 @@ settings:
 			}
 		}
 	}
+	dt = ::std::max(1., timelen * 1e-6); // 经验之谈：不这样，那么用时巨大。积分十万步用时约数秒
+	sample_dt = ::std::max(dt, ::std::max(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要
+	steps = ::std::max(sample_dt, ::std::max(static_cast<int>(steps / sample_dt), 1) * sample_dt);
 	finished = true;
 	return;
 }

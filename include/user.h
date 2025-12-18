@@ -33,7 +33,7 @@
 // import <filename> (file format should be identical to the "initialize -manual" section)
 // <end initialize> (don't type this line when importing from file)
 // 
-// step <dt (= 1h in simulation)> <steps (between every output, = 1h)>
+// step <sample_dt (= 1h in simulation)> <steps (between every output, = 1h)>
 // method <method (= euler/verlet/rk4)>
 // print2screen (default) / print2file <filename>
 // timelen <total_time (= 1y)>
@@ -68,7 +68,7 @@ public:
 	std::string filename = "";
 	std::ofstream fout;
 
-	double dt = 1., steps = 1.;
+	double dt = 1., sample_dt = 1., steps = 24.;
 	std::string method = "verlet", analyse_id = "";
 	double timelen = phy::YEAR;
 	bool unlimited = false, finished = false;

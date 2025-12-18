@@ -8,16 +8,21 @@
 #include "physics.h"
 #include "integrator.h"
 #include "user.h"
+#include "calendar.h"
 #include "test.h"
 
-_state state;
+_state state(1);
 _user user;
+_calendar cal(state);
 
 int main()
 {
 	// int time0 = time(NULL);
-	double time0 = 0.;
+	double time0 = 0., time_sample = 0.;
 	user.read_cmd(state);
+
+	if (!cal.is_state_set())
+		cal.set_state(state);
 
 	std::ifstream fin;
 	std::ofstream fout;
@@ -64,13 +69,14 @@ int main()
 	{
 		if (/*time(NULL)*/state.time - time0 >= user.steps)
 		{
+			cal.rank_all();
 			if (user.screen_print)
 			{
 				std::cout << state << std::endl;
 				// _obj _ = state.get_sun();
 				//std::cout << "deltaEnergy%: " << (state.get_energy() - e0) / e0 << std::endl;
+				cal.helper_printrank(std::cout);
 				std::cout << _LINE_LONG << std::endl;
-				
 			}
 			if (user.fout.is_open())
 			{
@@ -88,11 +94,17 @@ int main()
 				// 		<< "  Period: " << state.get_T(o) << std::endl
 				// 		<< "  Cos_angle: " << (state.get_analyse_obj().pos - o.pos).cos_angle_with(state.get_angmom(o)) << std::endl;
 				// }
+				cal.helper_printrank(user.fout);
 				user.fout << _LINE_LONG << std::endl;
 			}
 			time0 = /*time(NULL)*/state.time;
 		}
 		integrate_dt(state, user.dt, user.method);
+		if (state.time - time_sample >= user.sample_dt)
+		{
+			cal.sample_all();
+			time_sample = state.time;
+		}
 	}
 
 	/*initgraph(1024, 768);
