@@ -43,7 +43,7 @@ namespace phy
 	constexpr double SOLAR_MASS = oriphy::SOLAR_MASS / oriphy::EARTH_MASS; // = 333445.0964 (EARTH_MASS)
 	constexpr double G = oriphy::G * (3600. * 3600.) * (oriphy::EARTH_MASS) / (oriphy::AU * oriphy::AU * oriphy::AU); // (AU³/EARTH_MASS/h²)
 	constexpr double V_SUN = oriphy::V_SUN * (3600.) / (oriphy::AU); // (AU/h)
-	constexpr double CRASH = 0.09; // 撞击阈值
+	constexpr double CRASH = 0.001; // 撞击阈值（这样相当于放弃合并天体了，唉）
 	constexpr double PI = oriphy::PI;
 }
 
@@ -79,7 +79,7 @@ class _state
 {
 private:
 	int state_ver = -1;
-	//double rank_sun(const _obj& o, std::map<std::string, bool>& bool_list); // 为捕获的强度打分
+	
 public:
 	std::vector<_obj> objs;
 	_obj NULL_OBJ; // 空天体
@@ -123,6 +123,9 @@ public:
 
 	// 判断轨道运行状态的有关基础方法
 
+	_3dv force_with(const _obj& o); // 引力
+	_3dv force_with(const std::string& id);
+
 	double get_orbit_energy(const _obj& o); // 相对于给定的analyse_obj
 	double get_orbit_energy(const std::string& id); // 重载
 
@@ -141,10 +144,6 @@ public:
 	double get_hill_radius(const _obj& thisobj, const _obj& thatobj); // 希尔半径
 	double get_hill_radius(const std::string& id1, const std::string& id2);
 
-	
-	// 判断轨道运行状态
-
-	//_obj& get_sun();
 };
 
 #endif

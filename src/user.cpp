@@ -7,9 +7,11 @@
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <chrono>
 #include <functional>
 #include "3dv.h"
 #include "physics.h"
+#include <omp.h>
 
 inline int _user::mymin(const int& a, const int& b) const
 {
@@ -66,7 +68,7 @@ inline _3dv _user::rand_v(double mark)
 {
 	if (!rand_init)
 	{
-		srand(static_cast<unsigned int>(time(NULL)));
+		gen = std::mt19937(rd());
 		rand_init = true;
 	}
 	return _3dv(
@@ -103,8 +105,16 @@ void _user::initialize(_state& state, const char& mode)
 	read_filename:
 		do
 		{
-			
-			q = _get();
+			try
+			{
+				q = _get();
+			}
+			catch (...)
+			{
+				return;
+			}
+			if (q.empty())
+				return;
 			if (q.front().front() != 'i' || q.size() < 2)
 			{
 				std::cerr << _INVALID << std::endl;
@@ -144,11 +154,20 @@ void _user::initialize(_state& state, const char& mode)
 		bool isrand = false;
 		_obj sample;
 		_clear(q);
-		if (s)
-			q = _get(fin);
-		else
-			q = _get();
-		if (q.front().front() == 'e' || q.empty())
+		try
+		{
+			if (s)
+				q = _get(fin);
+			else
+				q = _get();
+		}
+		catch (...)
+		{
+			return;
+		}
+		if (q.empty())
+			return;
+		if (q.empty() || q.front().front() == 'e')
 			break;
 		if (q.front().front() == 'r')
 		{
@@ -380,6 +399,33 @@ bool _user::set_tlen(_Q& q)
 	return true;
 }
 
+bool _user::set_display(_Q& q)
+{
+	if (q.empty())
+	{
+		display = true;
+		return true;
+	}
+	if (q.size() < 2)
+		return false;
+	int w, h;
+	try
+	{
+		w = std::stoi(q.front());
+		q.pop();
+		h = std::stoi(q.front());
+		q.pop();
+	}
+	catch (...)
+	{
+		return false;
+	}
+	display = true;
+	width = w;
+	height = h;
+	return true;
+}
+
 bool _user::set_analyse_id(_state& state, _Q& q)
 {
 	if (q.empty())
@@ -415,10 +461,17 @@ void _user::read_cmd(_state& state/*, bool put_prompt = true*/)
 start_initialize:
 	do
 	{
-		if (mode != '\0')
+		if (mode == 's' || mode == 'm' || mode == 'r')
 			break;
-		_clear(q);
-		q = _get();
+		try
+		{
+			_clear(q);
+			q = _get();
+		}
+		catch (...)
+		{
+			break;
+		}
 		if (q.empty())
 		{
 			std::cerr << "[Error] Console unavailable." << std::endl;
@@ -437,14 +490,14 @@ start_initialize:
 	} while (true);
 	if (!console)
 		return;
-	if (mode == '\0')
+	if (mode != 's' && mode !='m' && mode !='r')
 		mode = q.front().front();
 	switch (mode)
 	{
 	case 'm':
 	case 'r':
 	case 's': initialize(state, mode); break;
-	default: std::cerr << _INVALID << std::endl; goto start_initialize;
+	default: std::cerr << _INVALID << std::endl; goto start_initialize; // wtf
 	}
 	if (!is_planet_added)
 	{
@@ -457,8 +510,15 @@ start_initialize:
 	// 防止用户硬要输入超过预期数量的 "end initialize"
 	do
 	{
-		_clear(q);
-		q = _get();
+		try
+		{
+			_clear(q);
+			q = _get();
+		}
+		catch (...)
+		{
+			break;
+		}
 	} while (q.front().front() == 'e');
 
 	bool analyse_set = false;
@@ -480,6 +540,7 @@ settings:
 		case 'm': q.pop(); success = setmethod(q); break;
 		case 'p': /*don't pop*/ success = setp(q); break;
 		case 't': q.pop(); success = set_tlen(q); break;
+		case 'd': q.pop(); success = set_display(q); break;
 		}
 		if (!success)
 			std::cerr << _INVALID << std::endl;
@@ -505,9 +566,88 @@ settings:
 			}
 		}
 	}
-	dt = ::std::max(1., timelen * 1e-6); // 经验之谈：不这样，那么用时巨大。积分十万步用时约数秒
-	sample_dt = ::std::max(dt, ::std::max(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要
-	steps = ::std::max(sample_dt, ::std::max(static_cast<int>(steps / sample_dt), 1) * sample_dt);
+	dt = (std::max)(1., timelen * 1e-6); // 经验之谈：不这样，那么用时巨大。积分十万步用时约数秒
+	sample_dt = (std::max)(dt, (std::max)(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要
+	steps = (std::max)(sample_dt, (std::max)(static_cast<int>(steps / sample_dt), 1) * sample_dt);
 	finished = true;
+	return;
+}
+
+
+long double _user::gettime()
+{
+	auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+	auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+	return static_cast<long double>(ns);
+}
+
+inline double _user::get_z(double z)
+{
+	return 2. / (1. + exp(-0.5 * z));
+}
+
+_3dv _user::getpos_ori(const _3dv& pos)
+{
+	_3dv res;
+	res.x = static_cast<double>(width / 2) + pos.x / zoom;
+	res.y = static_cast<double>(height / 2) + pos.y / zoom;
+	res.z = get_z(pos.z);
+	return res;
+}
+
+void _user::show(_state& s)
+{
+	static int zoom_times = 0, times = 0;
+	//static long double time = 0;
+	if (!display)
+		return;
+	long double current_time = gettime();
+	/*if (current_time - time >= 3e7)
+	{
+		time = gettime();
+		return;
+	}*/
+	if (times < 5)
+	{
+		++times;
+		return;
+	}
+	times = 0;
+	if (!zoomed)
+	{
+		zoom = static_cast<double>((std::min)(height, width)) / 180.;
+		std_rcircle = 3.; // 放弃根据屏幕大小调整
+		zoomed = true;
+	}
+	double xmax = -INFINITY, ymax = -INFINITY;
+#pragma omp parallel for schedule(dynamic)
+	for (int i = 0; i < s.objs.size(); ++i)
+	{
+		if (xmax < std::abs(s.objs[i].pos.x))
+			xmax = std::abs(s.objs[i].pos.x);
+		if (ymax < std::abs(s.objs[i].pos.y))
+			ymax = std::abs(s.objs[i].pos.y);
+	}
+	if ((xmax * 2 / zoom) > width || (ymax * 2 / zoom) > height)
+	{
+		++zoom_times;
+		zoom *= 1 +  1 / std::sqrt(static_cast<double>(zoom_times));
+	}
+	while ((xmax * 5 / zoom) < width && (ymax * 5 / zoom) < width)
+		zoom /= 2;
+	cleardevice();
+	setcolor(WHITE);
+	xyprintf(0, 0, "ThreeBodyCalendar [Author: OpenG-qkmb]");
+	for (int i = 0; i < s.objs.size(); ++i)
+	{
+		_3dv screen = getpos_ori(s.objs[i].pos);
+		int radius = static_cast<int>(std::ceil(screen.z * std_rcircle)); // !!!
+		COLORS col = (s.objs[i].type == STAR) ? STAR_COLOR : PLANET_COLOR;
+		setfillcolor(col);
+		setcolor(col);
+		fillellipse(static_cast<int>(std::round(screen.x)), static_cast<int>(std::round(screen.y)), radius, radius);
+	}
+	delay_ms(16);
+	//time = gettime();
 	return;
 }

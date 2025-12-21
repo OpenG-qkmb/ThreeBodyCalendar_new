@@ -193,8 +193,8 @@ bool _state::orbit_me(std::string sunid, _obj& o, double r)
 	if (it == objs.end())
 		return false;
 	sun = *it;
-	if (sun.type == PLANET)
-		return false;
+	/*if (sun.type == PLANET)
+		return false;*/ // 取消这一限制
 	double v = sqrt(phy::G * sun.m / r);
 	o.pos = sun.pos + _3dv(r, 0, 0);
 	o.v = sun.v + _3dv(0, v, 0);
@@ -254,6 +254,24 @@ std::ostream& operator<<(std::ostream& os, _state& s) // 输出流
 
 
 // 判断轨道运行状态的有关基础方法
+
+_3dv _state::force_with(const _obj& o)
+{
+	_3dv r(0), v(0);
+	_obj& anlys = get_analyse_obj();
+	if (anlys == NULL_OBJ)
+		return 0.;
+	r = o.pos - anlys.pos;
+	v = anlys.v - o.v;
+	return (phy::G * anlys.m * o.m / r.mag_2()) * (r._e());
+}
+_3dv _state::force_with(const std::string& id)
+{
+	auto it = std::find(objs.begin(), objs.end(), _obj(id));
+	if (it == objs.end())
+		return 0.;
+	return force_with(*it);
+}
 
 double _state::get_orbit_energy(const _obj& o) // 相对于给定的analyse_obj
 {
@@ -359,110 +377,3 @@ double _state::get_hill_radius(const std::string& id1, const std::string& id2)
 		return 0.;
 	return get_hill_radius(*it1, *it2);
 }
-
-//double _state::rank_sun(const _obj& o, std::map<std::string, bool>& bool_list) // 为捕获的强度打分
-//{
-//	if (get_analyse_obj() == NULL_OBJ)
-//		return -8000.;
-//	_obj anlys = get_analyse_obj();
-//
-//	if (o == anlys)
-//		return -4000.;
-//
-//	double totrank = 0.;
-//	double orbit_energy, cos_angle;
-//
-//	bool_list.clear();
-//
-//#ifdef TEST_SUNRANK
-//	std::cout << std::endl << "[Debug] Object " << o.id << ":" << std::endl;
-//#endif
-//
-//	// 以下权重均有待验证
-//
-//	// 轨道能量（0.2）
-//	orbit_energy = get_orbit_energy(o);
-//	if (orbit_energy >= 0.)
-//	{
-//		// totrank -= 2500.;
-//		totrank -= orbit_energy * 1e7 * 0.75;
-//#ifdef TEST_SUNRANK
-//		std::cout << "[Debug] Rank of orbit energy: " << -orbit_energy * 1e7 * 0.75 << std::endl;
-//#endif
-//	}
-//	else
-//	{
-//		totrank -= orbit_energy * 1e7 * 0.75; // 经验之谈：地球绕太阳此项数值大约为2.5e-7，下同
-//#ifdef TEST_SUNRANK
-//		std::cout << "[Debug] Rank of orbit energy: " << -orbit_energy * 1e7 * 0.75 << std::endl;
-//#endif
-//	}
-//
-//	// 角动量与位矢应几近垂直（0.3）
-//	cos_angle = (anlys.pos - o.pos).cos_angle_with(get_angmom(o)); // 1e-25
-//	totrank -= cos_angle * 1e25 * 3; // 不垂直则扣分
-//#ifdef TEST_SUNRANK
-//	std::cout << "[Debug] Rank of cos_angle: " << -cos_angle * 1e25 * 3 << std::endl;
-//#endif
-//
-//	// 希尔球（0.5）
-//
-//	for (const _obj& otherobj : objs)
-//	{
-//		if (otherobj == o || otherobj == anlys)
-//			continue;
-//		double hill_radius = get_hill_radius(o, otherobj);
-//		bool hill_ball_all = true; // 对所有其他天体，是否均在该恒星希尔球内
-//
-//		if (hill_radius <= 0.)
-//		{
-//#ifndef TEST_SUNRANK
-//			bool_list.insert(std::pair<std::string, bool>(o.id, false));
-//			totrank -= 1;
-//			continue;
-//#else
-//			std::cout << "[Debug] Hill sphere: Main=" << o.id << "; Other=" << otherobj.id << "; Radius<0: " << hill_radius << std::endl;
-//#endif
-//		}
-//
-//		if (anlys.pos.distance(o.pos) > hill_radius) // 在本恒星希尔球外
-//		{
-//			hill_ball_all = false;
-//			totrank -= 0.5 / ((size() > 2) ? (static_cast<double>(size() - 2)) : 1.);
-//#ifdef TEST_SUNRANK
-//			std::cout << "[Debug] Hill sphere: Main=" << o.id << "; Other=" << otherobj.id << "; deltaR=" << -0.5 / ((size() > 2) ? (static_cast<double>(size() - 2)) : 1.) << std::endl;
-//#endif
-//		}
-//		else
-//		{
-//#ifdef TEST_SUNRANK
-//			std::cout << "[Debug] Hill sphere: Main=" << o.id << "; Other=" << otherobj.id << "; ===IN===" << std::endl;
-//#endif
-//		}
-//		if (hill_ball_all)
-//			bool_list.insert(std::pair<std::string, bool>(o.id, true));
-//		else
-//			bool_list.insert(std::pair<std::string, bool>(o.id, false));
-//	}
-//#ifdef TEST_SUNRANK
-//	std::cout << "[Debug] Total rank for object " << o.id << ": " << totrank << std::endl;
-//#endif
-//	return totrank;
-//}
-//
-//_obj& _state::get_sun()
-//{
-//	if (get_analyse_obj() == NULL_OBJ)
-//		return NULL_OBJ;
-//	_obj anlys = get_analyse_obj();
-//	
-//	std::map<std::string, bool> is_in_hill_ball;
-//	std::map<std::string, double>ranks;
-//	for (const _obj& o : objs)
-//	{
-//		if (o == anlys)
-//			continue;
-//		ranks.insert(std::pair<std::string, double>(o.id, rank_sun(o, is_in_hill_ball)));
-//	}
-//	return NO_SUN_OBJ;
-//}

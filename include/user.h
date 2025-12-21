@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef SHOW_CONSOLE
+#define SHOW_CONSOLE
+#endif
+
 #ifndef _USER_H_
 #define _USER_H_
 
@@ -11,7 +15,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <chrono>
 #include <functional>
+#include <graphics.h>
+#include <ege.h>
 #include "3dv.h"
 #include "physics.h"
 
@@ -39,6 +46,7 @@
 // timelen <total_time (= 1y)>
 // timelen unlimited
 // analyse <id>
+// display [<height (= 1024)> <width (= 768)>]
 // 
 // start/begin
 
@@ -62,6 +70,17 @@ private:
 	inline _3dv rand_v(double mark);
 	_3dv rand_v_new(double mark);
 
+	// 可视化
+	double zoom = 7.3143; // 与rand的范围相应，768 / 105
+	_3dv getpos_ori(const _3dv& pos);
+	inline double get_z(double z);
+	bool zoomed = false;
+	double std_rcircle = 3;
+
+	const COLORS STAR_COLOR = RED, PLANET_COLOR = WHITE;
+
+	long double gettime();
+
 public:
 
 	bool screen_print = true;
@@ -72,6 +91,11 @@ public:
 	std::string method = "verlet", analyse_id = "";
 	double timelen = phy::YEAR;
 	bool unlimited = false, finished = false;
+
+
+
+	bool display = false;
+	int width = 1024, height = 768;
 	
 
 	void initialize(_state& state, const char& mode);
@@ -80,11 +104,12 @@ public:
 	bool setp(_Q& q);
 	bool set_tlen(_Q& q);
 	bool set_analyse_id(_state& state, _Q& q);
+	bool set_display(_Q& q);
 	void read_cmd(_state& state/*, bool put_prompt = true*/);
 
 	_user()
 	{
-		srand(static_cast<unsigned int>(time(NULL)));
+		// srand(static_cast<unsigned int>(time(NULL)));
 		gen = std::mt19937(rd());
 		rand_init = true;
 	}
@@ -93,6 +118,10 @@ public:
 		if (fout.is_open())
 			fout.close();
 	}
+
+
+	// 可视化
+	void show(_state& s);
 };
 
 

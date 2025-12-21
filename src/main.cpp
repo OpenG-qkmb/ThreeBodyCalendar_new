@@ -1,8 +1,9 @@
 ﻿#define SHOW_CONSOLE
+
 #include <iostream>
 #include <fstream>
-// #include <graphics.h>
-// #include <ege.h>
+#include <graphics.h>
+#include <ege.h>
 // #include <ctime>
 #include "3dv.h"
 #include "physics.h"
@@ -65,58 +66,42 @@ int main()
 
 	// test
 
+	if (user.display)
+	{
+		initgraph(user.width, user.height);
+		setcaption("ThreeBodyCalendar");
+		setbkcolor(BLACK);
+		cleardevice();
+		xyprintf(0, 0, "ThreeBodyCalendar [Author: OpenG-qkmb]");
+	}
+
 	while (user.finished && (state.get_analyse_obj() != state.NULL_OBJ) && (state.time < user.timelen || user.unlimited))
 	{
-		if (/*time(NULL)*/state.time - time0 >= user.steps)
+		if (state.time - time0 >= user.steps)
 		{
-			cal.rank_all();
+			cal.rank_all_new();
 			if (user.screen_print)
 			{
 				std::cout << state << std::endl;
-				// _obj _ = state.get_sun();
-				//std::cout << "deltaEnergy%: " << (state.get_energy() - e0) / e0 << std::endl;
 				cal.helper_printrank(std::cout);
 				std::cout << _LINE_LONG << std::endl;
 			}
 			if (user.fout.is_open())
 			{
 				user.fout << state << std::endl;
-				//user.fout << "deltaEnergy%: " << (state.get_energy() - e0) / e0 << std::endl;
-				// for (_obj& o : state.objs)
-				// {
-				// 	if (o.type == PLANET || o == state.get_analyse_obj() || state.get_orbit_energy(o) > 0)
-				// 		continue;
-				// 	user.fout << "Orbiting object: " << o.id << std::endl;
-				// 	user.fout << "  Orbital energy: " << state.get_orbit_energy(o) << std::endl
-				// 		<< "  Angular momentum: " << state.get_angmom(o) << std::endl
-				// 		<< "  Semi-major axis: " << state.get_semi_a(o) << std::endl
-				// 		<< "  Eccentricity: " << state.get_eccent(o).mag() << std::endl
-				// 		<< "  Period: " << state.get_T(o) << std::endl
-				// 		<< "  Cos_angle: " << (state.get_analyse_obj().pos - o.pos).cos_angle_with(state.get_angmom(o)) << std::endl;
-				// }
 				cal.helper_printrank(user.fout);
 				user.fout << _LINE_LONG << std::endl;
 			}
-			time0 = /*time(NULL)*/state.time;
+			time0 = state.time;
 		}
 		integrate_dt(state, user.dt, user.method);
-		if (state.time - time_sample >= user.sample_dt)
+		if (user.display)
 		{
-			cal.sample_all();
-			time_sample = state.time;
+			user.show(state);
 		}
 	}
-
-	/*initgraph(1024, 768);
-	* setcaption("ThreeBodyCalendar");
-	* setbkcolor(BLACK);
-	* cleardevice();
-	* xyprintf(0, 0, "ThreeBodyCalendar [Author: OpenG-qkmb]");
-	* while (!(kbhit() && getch() == 27))
-	* {
-	* 	
-	* }
-	* closegraph();*/
+	if (user.display)
+		closegraph();
 	if (fin.is_open())
 		fin.close();
 	if (fout.is_open())

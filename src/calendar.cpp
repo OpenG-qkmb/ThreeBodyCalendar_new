@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <graphics.h>
+#include <ege.h>
 #include <omp.h>
 
 
@@ -116,11 +118,9 @@ double _calendar::rank_f_status(const _obj& sun)
 		return 0;
 	if (sun == s.NULL_OBJ || sun.type != STAR)
 		return 0;
-	_obj& o = s.get_analyse_obj();
-	double dist2 = o.pos.distance(sun.pos);
-	if (o.pos.distance(sun.pos) < phy::CRASH)
-		dist2 += SMALL_NUM;
-	return ((phy::G * sun.m / dist2) * (o.pos - sun.pos)._e())._e().dot(o.a._e());
+	set_f_mags();
+	double fm = (f_mags > SMALL_NUM) ? f_mags : SMALL_NUM;
+	return s.force_with(sun).mag() / fm;
 }
 
 void _calendar::sample_all()
@@ -128,6 +128,7 @@ void _calendar::sample_all()
 	_state& s = get_state();
 	if (s == NULL_STATE)
 		return;
+	ranked = false;
 #pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < s.objs.size(); ++i)
 	{
@@ -138,6 +139,22 @@ void _calendar::sample_all()
 			sample_energy(s.objs[i]);
 			sample_angmom(s.objs[i]);
 		}
+	}
+	return;
+}
+
+void _calendar::set_f_mags()
+{
+	f_mags = 0;
+	_state& s = get_state();
+	if (s == NULL_STATE)
+		return;
+#pragma omp parallel for reduction(+ : f_mags)
+	for (int i = 0; i < s.objs.size(); ++i)
+	{
+		if (s.objs[i].type != STAR || s.objs[i] == s.NULL_OBJ)
+			continue;
+		f_mags += s.force_with(s.objs[i]).mag();
 	}
 	return;
 }
@@ -158,8 +175,8 @@ void _calendar::rank_all()
 		{
 			double thisrank = 0;
 			thisrank += rank_energy(s.objs[i]) * 36; // 此数字为实验调整得到，或有更优值，下同
-			thisrank += rank_angmom(s.objs[i]) * 0.003;
-			thisrank += rank_f_status(s.objs[i]) * 0.3;
+			// thisrank += rank_angmom(s.objs[i]) * 0.003; // 不计入评分：改为（稳定？）判断
+			thisrank += rank_f_status(s.objs[i]) * 0.5;
 			ranklist[s.objs[i].id] = thisrank;
 		}
 	}
@@ -204,9 +221,21 @@ void _calendar::rank_all()
 	var_energy.clear();
 	ave_energy.clear();
 	dtheta_ranks.clear(); // 不要清除前面记录的上一步角动量
+	ranked = true;
 	return;
 }
 
+// 从实践的角度看：行星被恒星稳定捕获时几乎可完全根据能量判断；
+// 反之，所有轨道能量均非负时，行星“乱飘”，此时几乎无有效判据，直接令NO_SUN_OBJ即可
+
+
+_era_type _calendar::get_era()
+{
+	if (!ranked)
+		rank_all();
+	return UNCERTAIN;
+	// TODO
+}
 
 
 void _calendar::helper_printrank(std::ostream& os)
@@ -218,6 +247,95 @@ void _calendar::helper_printrank(std::ostream& os)
 	{
 		os << "Rank of star [" << it->first << "] = " << it->second << std::endl;
 	}
-	os << "Current sun: " << get_current_sun().id  << " (rate = " << leading_rate << ")" << std::endl;
+	os << "Current sun: " << get_current_sun().id/*  << " (rate = " << leading_rate << ")"*/ << std::endl;
+	return;
+}
+
+
+
+double _calendar::rank_v(_state& s, _obj& me, const _obj& sun)
+{
+	double dist = (me.pos - sun.pos).mag(), v = (me.v - sun.v).mag();
+	double v_esc = std::sqrt(2 * phy::G * sun.m / dist);
+	if (v > v_esc)
+		return 0;
+	return (1 - (v * v / (v_esc * v_esc))); // 1 - (v / v_esc) ^ 2
+}
+double _calendar::rank_hradius(_state& s, _obj& me, const _obj& sun)
+{
+	double dist = (me.pos - sun.pos).mag(), min_hillr = INFINITY, max_hillr = -1e9;
+	int sun_cnt = 1;
+#pragma omp parallel for schedule(dynamic)
+	for (int i = 0; i < s.objs.size(); ++i)
+	{
+		if (s.objs[i] == sun || s.objs[i].type != STAR || s.objs[i] == s.NULL_OBJ)
+			continue;
+		double hill_r = s.get_hill_radius(sun, s.objs[i]);
+		if (hill_r > max_hillr)
+			max_hillr = hill_r;
+		if (hill_r < min_hillr)
+			min_hillr = hill_r;
+		++sun_cnt;
+	}
+	if (dist <= (min_hillr + SMALL_NUM))
+		return 1;
+	if (dist >= (max_hillr - SMALL_NUM))
+		return 0;
+	return ((dist - min_hillr) / (max_hillr - min_hillr));
+}
+
+double _calendar::rank_this(const _obj& sun)
+{
+	_state& s = get_state();
+	if (s == NULL_STATE)
+		return 0;
+	if (sun == s.NULL_OBJ || sun == s.NO_SUN_OBJ)
+		return 0;
+	_obj& me = s.get_analyse_obj();
+	if (me == s.NULL_OBJ)
+		return 0;
+	double rank = 0;
+	rank += rank_v(s, me, sun);
+	rank += rank_hradius(s, me, sun);
+	return rank;
+}
+
+void _calendar::rank_all_new()
+{
+	_state& s = get_state();
+	if (s == NULL_STATE)
+		return;
+	ranklist.clear();
+	sun_cnt = 0;
+#pragma omp parallel for schedule(dynamic)
+	for (int i = 0; i < s.objs.size(); ++i)
+	{
+		if (s.objs[i].type != STAR || s.objs[i] == s.NULL_OBJ)
+			continue;
+#pragma omp critical
+		{
+			ranklist[s.objs[i].id] = rank_this(s.objs[i]);
+			++sun_cnt;
+		}
+	}
+	if (ranklist.empty())
+	{
+		current_sun = std::ref(s.NO_SUN_OBJ);
+	}
+	else
+	{
+		auto best_sun = ranklist.begin();
+		double mrank = -1e9;
+		for (auto it = ranklist.begin(); it != ranklist.end(); ++it)
+		{
+			if (it->second > mrank)
+			{
+				mrank = it->second;
+				best_sun = it;
+			}
+		}
+		current_sun = std::ref(s.get_obj_by_id(best_sun->first));
+	}
+	ranked = true;
 	return;
 }
