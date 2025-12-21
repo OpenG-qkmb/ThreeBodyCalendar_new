@@ -637,7 +637,7 @@ void _user::show(_state& s)
 		zoom /= 2;
 	cleardevice();
 	setcolor(WHITE);
-	xyprintf(0, 0, "ThreeBodyCalendar [Author: OpenG-qkmb]");
+	xyprintf(0, 0, "Simulator");
 	for (int i = 0; i < s.objs.size(); ++i)
 	{
 		_3dv screen = getpos_ori(s.objs[i].pos);

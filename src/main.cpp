@@ -72,7 +72,7 @@ int main()
 		setcaption("ThreeBodyCalendar");
 		setbkcolor(BLACK);
 		cleardevice();
-		xyprintf(0, 0, "ThreeBodyCalendar [Author: OpenG-qkmb]");
+		xyprintf(0, 0, "Simulator");
 	}
 
 	while (user.finished && (state.get_analyse_obj() != state.NULL_OBJ) && (state.time < user.timelen || user.unlimited))

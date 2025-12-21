@@ -45,9 +45,9 @@ if(WIN32)
     )
 
     # 防止控制台窗口被禁用
-    set_target_properties(ThreeBodyCalendar PROPERTIES
-    LINK_FLAGS "/SUBSYSTEM:CONSOLE"
-    )
+    # set_target_properties(ThreeBodyCalendar PROPERTIES
+    # LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+    # )
 endif()
 
 # 编译器选项
