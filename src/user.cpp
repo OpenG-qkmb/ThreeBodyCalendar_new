@@ -598,6 +598,7 @@ _3dv _user::getpos_ori(const _3dv& pos)
 void _user::show(_state& s)
 {
 	static int zoom_times = 0, times = 0;
+	static bool is_shrink = false;
 	//static long double time = 0;
 	if (!display)
 		return;
@@ -632,9 +633,12 @@ void _user::show(_state& s)
 	{
 		++zoom_times;
 		zoom *= 1 +  1 / std::sqrt(static_cast<double>(zoom_times));
+		is_shrink = true;
 	}
-	while ((xmax * 5 / zoom) < width && (ymax * 5 / zoom) < width)
+	while ((!is_shrink) && ((xmax * 5 / zoom) < width && (ymax * 5 / zoom) < width))
 		zoom /= 2;
+	if (!is_shrink)
+		is_shrink = true;
 	cleardevice();
 	setcolor(WHITE);
 	xyprintf(0, 0, "Simulator");
