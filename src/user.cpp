@@ -9,8 +9,10 @@
 #include <random>
 #include <chrono>
 #include <functional>
+#include <format>
 #include "3dv.h"
 #include "physics.h"
+#include "calendar.h"
 #include <omp.h>
 
 inline int _user::mymin(const int& a, const int& b) const
@@ -566,7 +568,7 @@ settings:
 			}
 		}
 	}
-	dt = (std::max)(1., timelen * 1e-6); // 经验之谈：不这样，那么用时巨大。积分十万步用时约数秒
+	dt = (std::max)(1., timelen * 2e-6); // 经验之谈：不这样，那么用时巨大。至多积分五十万步
 	sample_dt = (std::max)(dt, (std::max)(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要
 	steps = (std::max)(sample_dt, (std::max)(static_cast<int>(steps / sample_dt), 1) * sample_dt);
 	finished = true;
@@ -590,12 +592,12 @@ _3dv _user::getpos_ori(const _3dv& pos)
 {
 	_3dv res;
 	res.x = static_cast<double>(width / 2) + pos.x / zoom;
-	res.y = static_cast<double>(height / 2) + pos.y / zoom;
+	res.y = static_cast<double>(height / 2) - pos.y / zoom;
 	res.z = get_z(pos.z);
 	return res;
 }
 
-void _user::show(_state& s)
+void _user::show(_state& s, _calendar& cal)
 {
 	static int zoom_times = 0, times = 0;
 	static bool is_shrink = false;
@@ -641,7 +643,9 @@ void _user::show(_state& s)
 		is_shrink = true;
 	cleardevice();
 	setcolor(WHITE);
-	xyprintf(0, 0, "Simulator");
+	std::string id = cal.get_current_sun().id;
+	std::string title = std::format("Current sun: {} (rate = {:f}, {:f}, {:f}) \n Time: {:f} \n YEAR_LEN = {:f} \n Year {:d}: {}", id, cal.ranklist_ranks[id].v, cal.ranklist_ranks[id].hill, cal.ranklist_ranks[id].ecc, s.time, cal.std_year, static_cast<int>(s.time / cal.std_year) + 1, cal.era_name());
+	xyprintf(0, 0, title.c_str());
 	for (int i = 0; i < s.objs.size(); ++i)
 	{
 		_3dv screen = getpos_ori(s.objs[i].pos);

@@ -26,7 +26,7 @@ void euler_step(_state& state, double dt) // 欧拉法前进dt
 	return;
 }
 
-void verlet_step(_state& state, double dt) // 显式Verlet法前进dt，无需欧拉法初始化
+void verlet_step(_state& state, double dt) // 速度Verlet法前进dt
 {
 
 	state.set_a();
@@ -124,7 +124,7 @@ void rk4_step(_state& state, double dt) // RK4法前进dt（若需，考虑优化？）
 		k4_v[i] = state_copy.objs[i].v;
 		k4_a[i] = state_copy.objs[i].a;
 	}
-	// 得出结果
+	// 结果
 #pragma omp parallel for schedule(dynamic)
 	for (size_t i = 0; i < n; ++i)
 	{
@@ -138,7 +138,7 @@ void rk4_step(_state& state, double dt) // RK4法前进dt（若需，考虑优化？）
 	state.set_a();
 	return;
 }
-// 翻百科能找到这个积分方法的公式
+// 翻百科
 
 void integrate_dt(_state& state, double dt, std::string_view method) // 前进dt
 {

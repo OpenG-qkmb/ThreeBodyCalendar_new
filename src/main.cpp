@@ -75,30 +75,34 @@ int main()
 		xyprintf(0, 0, "Simulator");
 	}
 
+	{
+		_state teststate = state;
+		cal.get_stdyear(teststate, user.method);
+	}
+
 	while (user.finished && (state.get_analyse_obj() != state.NULL_OBJ) && (state.time < user.timelen || user.unlimited))
 	{
-		if (state.time - time0 >= user.steps)
+		if (state.time - time0 >= cal.std_year)
 		{
-			cal.rank_all_new();
+			(void)cal.get_era();
 			if (user.screen_print)
 			{
-				std::cout << state << std::endl;
-				cal.helper_printrank(std::cout);
-				std::cout << _LINE_LONG << std::endl;
+				cal.printstate(std::cout);
 			}
 			if (user.fout.is_open())
 			{
-				user.fout << state << std::endl;
-				cal.helper_printrank(user.fout);
-				user.fout << _LINE_LONG << std::endl;
+				cal.printstate(user.fout);
 			}
 			time0 = state.time;
 		}
 		integrate_dt(state, user.dt, user.method);
+		cal.rank_all_new();
+		cal.pushrank();
 		if (user.display)
 		{
-			user.show(state);
+			user.show(state, cal);
 		}
+		// cal.reset_ranked();  // pushrank()自带reset
 	}
 	if (user.display)
 		closegraph();

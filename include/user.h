@@ -21,6 +21,7 @@
 #include <ege.h>
 #include "3dv.h"
 #include "physics.h"
+#include "calendar.h"
 
 
 // command format:
@@ -121,7 +122,7 @@ public:
 
 
 	// ø… ”ªØ
-	void show(_state& s);
+	void show(_state& s, _calendar& cal);
 };
 
 
