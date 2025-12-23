@@ -119,7 +119,7 @@ std::string _calendar::era_name()
 	case STABLE: res = "Stable"; break;
 	case CHAOTIC: res = "Chaotic"; break;
 	case UNCERTAIN:
-	default: res = "Uncertain"; break;
+	default: res = "Not yet determined"; break;
 	}
 	return res;
 }
@@ -524,6 +524,7 @@ void _calendar::get_stdyear(_state& s, const std::string& method)
 	}
 	this_state = state_true;
 	state_getyear = std::ref(NULL_STATE);
+	current_era = UNCERTAIN;
 	periodlist.clear();
 	ranklist_ranks.clear();
 	reset_ranked();
@@ -536,7 +537,7 @@ void _calendar::printstate(std::ostream& os)
 	_obj& cur_sun = get_current_sun();
 	os << s << std::endl;
 	os << "Current sun: " << cur_sun.id << std::endl;
-	os << "Year " << static_cast<int>(s.time / std_year) + 1 << ": " << era_name() << std::endl;
+	os << "Year " << static_cast<int>(s.time / std_year) << ": " << era_name() << std::endl;
 	os << _LINE_LONG << std::endl;
 	return;
 }
