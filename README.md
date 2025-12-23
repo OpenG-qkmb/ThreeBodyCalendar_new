@@ -6,14 +6,17 @@ This project is intended for submission as a project for the Computer Programmin
 
 
 目录
-- .gitattributes  
-- .gitignore  
-- CMakeLists.txt  
-- CMakePresets.json  
-- LICENSE.txt  
-- README.md (此文件)  
-- include/ (头文件目录)  
-- src/ (实现代码)
+
+```text
+.gitattributes  
+.gitignore  
+CMakeLists.txt  
+CMakePresets.json  
+LICENSE.txt  
+README.md (此文件)  
+include/ (头文件目录)  
+src/ (实现代码)
+```
 
 项目目标
 - 提供一个可配置的三体数值积分与后处理工具，用以：  
@@ -27,7 +30,7 @@ This project is intended for submission as a project for the Computer Programmin
 - 标准年识别（尝试积分并采样，通过能量计算半长轴推知周期）  
 - 纪元划分：通过瞬时判据周期性采样检测判断“恒纪元 / 乱纪元”  
 - 输出：当前状态，主导恒星及纪元类型  
-- 可视化前端：使用[EGE库](https://xege.org/)实现“示意图”
+- 可视化前端：使用[ EGE 库](https://xege.org/)实现“示意图”
 
 依赖
 - CMake 3.15+  
@@ -37,8 +40,8 @@ This project is intended for submission as a project for the Computer Programmin
 算法与数值方法概述
 - 引力模型：牛顿万有引力定律  
 - 积分方法：
-  - Euler法  
-  - 速度Verlet法（默认）  
+  - Euler 法  
+  - 速度 Verlet 法（默认）  
   - 四阶 Runge-Kutta 法  
 - 稳定性判据：
   - 绑定判据：瞬时逃逸速度判断  
