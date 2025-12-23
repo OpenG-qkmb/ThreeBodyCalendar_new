@@ -5,7 +5,7 @@
 This project is intended for submission as a project for the Computer Programming course. It aims to simulate the three-body motion of any given parameters, generating a perpetual calendar for a planet orbiting a specific star.
 
 
-目录（从仓库索引获得的条目；可能不是完整）
+目录
 - .gitattributes  
 - .gitignore  
 - CMakeLists.txt  
@@ -15,14 +15,13 @@ This project is intended for submission as a project for the Computer Programmin
 - include/ (头文件目录)  
 - src/ (实现代码)
 
-项目目的
-- 提供一个可配置的三体数值积分与后处理工具，用以：
-  - 判断给定初始条件下行星是否“稳定绕行”某恒星；
-  - 估计标准年（周期）并在长期演化中划分“恒纪元 / 乱纪元”；
-  - 导出“万年历”式的事件表（例如每年的近心时刻、纪元边界、关键扰动事件）；
-  - （可选）提供简易可视化/导出功能，便于调试与展示。
+项目目标
+- 提供一个可配置的三体数值积分与后处理工具，用以：  
+  - 判断给定初始条件下行星是否“稳定绕行”某恒星；  
+  - 估计标准年（周期）并在长期演化中划分“恒纪元 / 乱纪元”；  
+  - 导出粗略的“万年历”  
 
-主要功能（高层）
+主要功能
 - 数值积分模块（支持不同积分器的选择）  
 - 即时与滑动窗口稳定性指标（能量和逃逸速度、Hill 判据等）  
 - 标准年识别（尝试积分并采样，通过能量计算半长轴推知周期）  
@@ -30,7 +29,7 @@ This project is intended for submission as a project for the Computer Programmin
 - 输出：当前状态，主导恒星及纪元类型  
 - 可视化前端：使用[EGE库](https://xege.org/)实现“示意图”
 
-依赖（建议、根据 CMakeLists.txt 检查并安装）
+依赖
 - CMake 3.15+  
 - C++20 编译器  
 - [Easy Graphics Engine](https://xege.org/)
