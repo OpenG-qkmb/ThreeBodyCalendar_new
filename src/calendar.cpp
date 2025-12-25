@@ -124,6 +124,7 @@ std::string _calendar::era_name()
 	return res;
 }
 
+// 下面的几个函数已暂弃用
 
 void _calendar::sample_energy(_state& s, const _obj& sun)
 {
@@ -137,7 +138,7 @@ void _calendar::sample_energy(_state& s, const _obj& sun)
 	++_ave.first;
 	_ave.second += energy;
 	++_var.first;
-	_var.second += (energy - _ave.second) * (energy - _ave.second);
+	_var.second += (energy - _ave.second) * (energy - _ave.second); // 这行是错误代码，欲修正须牺牲性能。包括这个函数在内的一系列方法已被弃用
 	return;
 }
 double _calendar::rank_energy(_state& s, const _obj& sun)

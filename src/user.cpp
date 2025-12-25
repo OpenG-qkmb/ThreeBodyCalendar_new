@@ -572,11 +572,11 @@ settings:
 		}
 	}
 	if (display)
-		dt = 1.;
+		dt = 1.; // display下积分步长可细一些
 	else
-		dt = (std::max)(1., timelen * 2e-6); // 经验之谈：不这样，那么用时巨大。至多积分五十万步
-	sample_dt = (std::max)(dt, (std::max)(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要
-	steps = (std::max)(sample_dt, (std::max)(static_cast<int>(steps / sample_dt), 1) * sample_dt);
+		dt = (std::max)(1., timelen * 2e-6); // 至多积分五十万步以控制输出时长
+	sample_dt = (std::max)(dt, (std::max)(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要 // 这个设置项已被废弃，没有设置的意义了
+	steps = (std::max)(sample_dt, (std::max)(static_cast<int>(steps / sample_dt), 1) * sample_dt); // 这个设置项也已被废弃
 	timelen += dt * 5; // 确保最后一年的数据输出
 	finished = true;
 	return;
