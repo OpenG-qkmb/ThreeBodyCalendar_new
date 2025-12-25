@@ -80,6 +80,11 @@ int main()
 		cal.get_stdyear(teststate, user.method);
 	}
 
+	if ((!user.display) && (!user.screen_print))
+	{
+		std::cout << "[Info] Please wait patiently..." << std::endl;
+	}
+
 	while (user.finished && (state.get_analyse_obj() != state.NULL_OBJ) && (state.time < user.timelen || user.unlimited))
 	{
 		if (state.time - time0 >= cal.std_year)

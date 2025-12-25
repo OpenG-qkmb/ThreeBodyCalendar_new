@@ -22,8 +22,8 @@ enum _era_type {STABLE/*, SEMI*/, CHAOTIC, UNCERTAIN};
 // 恒纪元 过渡纪元 乱纪元 无法确定 (现天体均为质点，暂不考虑温度等因素)
 // 决定：弃用SEMI（过渡纪元）但凡不稳就是乱
 
-using _era_pair = std::pair<int, _era_type>;
-using _cnt_lf = std::pair<int, double>;
+using _era_pair = std::pair<int, _era_type>; // 暂弃用
+using _cnt_lf = std::pair<int, double>; // 暂弃用
 
 struct _ranks
 {
@@ -51,7 +51,7 @@ struct _era_info
 	std::string sun_id;
 };
 
-namespace gyear
+namespace gyear // 预先积分求一年时长时的步长和时长设置
 {
 	constexpr double dt = 1.;
 	constexpr double timelen = 1500;
@@ -67,21 +67,20 @@ private:
 	std::reference_wrapper<_state> state_getyear = std::ref(NULL_STATE);
 	std::reference_wrapper<_state> state_true = std::ref(NULL_STATE);
 	std::reference_wrapper<_obj> current_sun = std::ref(NO_STATE_NULL_OBJ);
-	double leading_rate = 0; // 取值范围：[0, 1] (= (max - second_max) / (max - min))
+	double leading_rate = 0; // 取值范围：[0, 1] (= (max - second_max) / (max - min)) （暂弃用）
 	int sun_cnt = 0;
 
 	bool ranked = false;
-	double f_mags = 0;
+	double f_mags = 0; // 暂弃用
 
 	// samples（暂弃用）
 	std::map<std::string, _cnt_lf> ave_energy; // 算术平均（实际存总和，取值时再除）
 	std::map<std::string, _cnt_lf> var_energy; // 方差（存储同上）
-
 	std::map<std::string, _3dv> prev_ang_mom;
 	std::map<std::string, double> dtheta_ranks;
 
 
-	// 尝试：采用瞬时判定方法，以下方法返回归一化评分
+	// 尝试：采用瞬时判定+采样的方法，以下方法均返回归一化评分
 	double rank_v(_state& s, _obj& me, const _obj& sun);
 	double rank_hradius(_state& s, _obj& me, const _obj& sun);
 	double rank_e(_state& s, _obj& me, const _obj& sun);
@@ -111,7 +110,7 @@ public:
 	_era_type current_era = UNCERTAIN;
 	std::string era_name();
 
-	// 判别绕行的依据（暂弃用）
+	// 判别绕行的依据（以下暂弃用）
 
 	void sample_energy(_state& s, const _obj& sun); // 取样
 	double rank_energy(_state& s, const _obj& sun); // 多次取样后计算某天体能量之得分
@@ -126,8 +125,10 @@ public:
 	void sample_all(_state& s);
 	void rank_all(_state& s); // 评分的同时设置最佳太阳
 
+	// （以上暂弃用）
 
-	// 尝试：采用瞬时判定方法
+
+	// 尝试：采用瞬时判定+采样的方法
 	_ranks rank_this(const _obj& sun);
 	void rank_all_new();
 	void pushrank();

@@ -66,19 +66,19 @@ read:
 	return q;
 }
 
-inline _3dv _user::rand_v(double mark)
-{
-	if (!rand_init)
-	{
-		gen = std::mt19937(rd());
-		rand_init = true;
-	}
-	return _3dv(
-		static_cast<double>(rand()) * mark / RAND_MAX,
-		static_cast<double>(rand()) * mark / RAND_MAX,
-		static_cast<double>(rand()) * mark / RAND_MAX
-	);
-}
+//inline _3dv _user::rand_v(double mark) // 弃用
+//{
+//	if (!rand_init)
+//	{
+//		gen = std::mt19937(rd());
+//		rand_init = true;
+//	}
+//	return _3dv(
+//		static_cast<double>(rand()) * mark / RAND_MAX,
+//		static_cast<double>(rand()) * mark / RAND_MAX,
+//		static_cast<double>(rand()) * mark / RAND_MAX
+//	);
+//}
 
 _3dv _user::rand_v_new(double mark)
 {
@@ -235,8 +235,8 @@ void _user::initialize(_state& state, const char& mode)
 
 		if (isrand)
 		{
-			sample.pos = rand_v_new(phy::AU * 50); // 姑且先这么考虑
-			sample.v = rand_v_new(phy::V_SUN * 10);
+			sample.pos = rand_v_new(phy::AU * 5); // 姑且先这么考虑
+			sample.v = rand_v_new(phy::V_SUN * 3);
 			sample.a = _3dv();
 			state.add(sample);
 			continue;
@@ -384,6 +384,8 @@ bool _user::set_tlen(_Q& q)
 {
 	if (q.empty())
 		return false;
+	unlimited = false;
+	timelen = phy::YEAR * 100;
 	if (q.front().front() == 'u')
 	{
 		unlimited = true;
@@ -408,6 +410,7 @@ bool _user::set_display(_Q& q)
 		display = true;
 		return true;
 	}
+	display = false;
 	if (q.size() < 2)
 		return false;
 	int w, h;
@@ -568,9 +571,13 @@ settings:
 			}
 		}
 	}
-	dt = (std::max)(1., timelen * 2e-6); // 经验之谈：不这样，那么用时巨大。至多积分五十万步
+	if (display)
+		dt = 1.;
+	else
+		dt = (std::max)(1., timelen * 2e-6); // 经验之谈：不这样，那么用时巨大。至多积分五十万步
 	sample_dt = (std::max)(dt, (std::max)(static_cast<int>(sample_dt / dt), 1) * dt); // 整倍数化，较为必要
 	steps = (std::max)(sample_dt, (std::max)(static_cast<int>(steps / sample_dt), 1) * sample_dt);
+	timelen += dt * 5; // 确保最后一年的数据输出
 	finished = true;
 	return;
 }

@@ -32,16 +32,16 @@
 // add <type (= planet/earth)> <id> <mass> orbit <id_sun> <r> (add planet - 2)
 // end initialize
 // 
-// initialize -rand
+// initialize -rand // 与-manual合并
 // rand <id> <mass> (type could only be STAR)
 // (planet cannot be added randomly, use "add ... orbit ...")
 // end initialize
 // 
-// initialize -stable
+// initialize -stable // 不一定要添加stable的轨道，只是指定从文件添加
 // import <filename> (file format should be identical to the "initialize -manual" section)
 // <end initialize> (don't type this line when importing from file)
 // 
-// step <sample_dt (= 1h in simulation)> <steps (between every output, = 1h)>
+// step <sample_dt (= 1h in simulation)> <steps (between every output, = 1h)> // 测试时可用的设置选项，正式发布后设置本项不再产生任何有效影响
 // method <method (= euler/verlet/rk4)>
 // print2screen (default) / print2file <filename>
 // timelen <total_time (= 1y)>
@@ -68,7 +68,7 @@ private:
 	void set_lower(std::string& st);
 
 	_Q _get(std::istream& s_in = std::cin);
-	inline _3dv rand_v(double mark);
+	//inline _3dv rand_v(double mark); // 弃用
 	_3dv rand_v_new(double mark);
 
 	// 可视化
@@ -90,7 +90,7 @@ public:
 
 	double dt = 1., sample_dt = 1., steps = 24.;
 	std::string method = "verlet", analyse_id = "";
-	double timelen = phy::YEAR;
+	double timelen = phy::YEAR * 100;
 	bool unlimited = false, finished = false;
 
 

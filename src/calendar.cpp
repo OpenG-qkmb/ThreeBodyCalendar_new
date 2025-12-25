@@ -480,8 +480,7 @@ _era_type _calendar::get_era()
 
 	var *= scal;
 
-	// 唉，经验数值，其实从经验上根本没什么好用的经验
-	// 恒纪元其实不需要这么复杂的判断，乱纪元判断了也没必要
+	// 实验拟定的数值
 	if (ave.sum_halfecc() < 0.45 || ave.ecc < 5e-3)
 	{
 		current_era = CHAOTIC;

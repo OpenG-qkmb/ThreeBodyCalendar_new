@@ -348,7 +348,7 @@ double _state::get_T(const _obj& o) // ÖÜÆÚ
 	double a = get_semi_a(o);
 	if (a <= 0.)
 		return 0.;
-	return 2.0 * phy::PI * std::sqrt(a * a * a / (phy::G * o.m));
+	return 2.0 * phy::PI * a * std::sqrt(a / (phy::G * o.m));
 }
 double _state::get_T(const std::string& id)
 {
