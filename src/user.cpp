@@ -15,6 +15,11 @@
 #include "calendar.h"
 #include <omp.h>
 
+// 备注：以下函数中涉及处理用户输入的部分少量采用goto。
+// 使用goto的部分主要为应对用户错误输入，便于在当前位置直接终止本轮输入处理
+// 回到该部分输入处理逻辑开头重置后重新要求用户输入。
+// 除本文件外，本项目没有其他使用goto的部分。
+
 inline int _user::mymin(const int& a, const int& b) const
 {
 	return (a < b) ? a : b;
@@ -40,7 +45,7 @@ void _user::set_lower(std::string& st)
 _Q _user::_get(std::istream& s_in)
 {
 	std::string cmd, single;
-read:
+read: // 如果读入失败或为空，将回到该点重新读入。
 	if (!std::getline(s_in, cmd))
 	{
 		if (s_in.eof())
@@ -55,6 +60,7 @@ read:
 	}
 	if (cmd.empty())
 		goto read;
+	// 如上，这里的goto跳回开头，期待用户输入合法内容。
 	_Q q = {};
 	set_lower(cmd);
 	// _clear(q);
@@ -105,6 +111,7 @@ void _user::initialize(_state& state, const char& mode)
 	if (s)
 	{
 	read_filename:
+		// 以下有两处goto回到本处，已经标出。如果读入失败或用户输入非法，将回到此处重新读入。
 		do
 		{
 			try
@@ -142,15 +149,16 @@ void _user::initialize(_state& state, const char& mode)
 		{
 			std::cerr << "[Error] Cannot open the file." << std::endl;
 			filename.clear();
-			goto read_filename;
+			goto read_filename; // 回到上面标记的位置重新读入
 		}
 		if (!fin.is_open())
 		{
 			std::cerr << "[Error] No such file." << std::endl;
 			filename.clear();
-			goto read_filename;
+			goto read_filename; // 回到上面标记的位置重新读入
 		}
 	}
+	// 以下没有回到read_filename的goto语句了
 	do
 	{
 		bool isrand = false;
@@ -182,6 +190,9 @@ void _user::initialize(_state& state, const char& mode)
 			q.pop();
 		}
 
+		// 这里使用的goto是一个例外，用于在rand模式下跳过部分不需要处理的逻辑。
+		// 仅此一例。
+
 		if (isrand)
 			goto skip_id;
 
@@ -205,7 +216,7 @@ void _user::initialize(_state& state, const char& mode)
 
 		// set id
 
-	skip_id:
+	skip_id: // 仅此一例的例外goto跳到此步。除上面注释标注的地方外，没有其他地方使用goto跳转到此。
 
 		sample.id = q.front();
 		if (state.isexist(sample.id))
@@ -463,11 +474,11 @@ void _user::read_cmd(_state& state/*, bool put_prompt = true*/)
 
 	// initialize
 	std::cout << "[Tip] Initialize before simulation. See README.md for help." << std::endl;
-start_initialize:
+start_initialize: // 如果用户在初始化阶段输入非法，将回到此处重新读入。共有两处，已经标出
 	do
 	{
 		if (mode == 's' || mode == 'm' || mode == 'r')
-			break;
+			break; // 如果用户已经选择初始化模式而因为后续读入非法回到此处，则跳过选择初始化模式的部分
 		try
 		{
 			_clear(q);
@@ -502,13 +513,15 @@ start_initialize:
 	case 'm':
 	case 'r':
 	case 's': initialize(state, mode); break;
-	default: std::cerr << _INVALID << std::endl; goto start_initialize; // wtf
+	default: std::cerr << _INVALID << std::endl; goto start_initialize; // 用户输入非法，回到start_initialize重新输入
 	}
 	if (!is_planet_added)
 	{
 		std::cerr << "[Error] No PLANET has yet been added to the system." << std::endl;
-		goto start_initialize;
+		goto start_initialize;// 用户没有添加行星，回到start_initialize重新输入
 	}
+
+	// 以下没有回到start_initialize的goto语句
 
 	std::cout << "[Tip] Confirm settings before simulation. See README.md for help." << std::endl;
 
@@ -528,7 +541,7 @@ start_initialize:
 
 	bool analyse_set = false;
 
-settings:
+settings: // 如果用户设置部分输入非法，将回到此处。仅有一处，已经标出
 
 	// settings
 	do
@@ -546,7 +559,7 @@ settings:
 		case 'p': /*don't pop*/ success = setp(q); break;
 		case 't': q.pop(); success = set_tlen(q); break;
 		case 'd': q.pop(); success = set_display(q); break;
-		}
+		} // 逐项设置。参考user.h头部的注释
 		if (!success)
 			std::cerr << _INVALID << std::endl;
 		if (jump)
@@ -559,7 +572,7 @@ settings:
 		{
 			std::cerr << "[Error] No PLANET has yet been added for analysis. Restart the program to address this issue." << std::endl;
 			q = _get();
-			goto settings;
+			goto settings; // 用户输入非法，回到设置部分的开头
 		}
 		for (int i = 0; i < state.objs.size(); ++i) // NO ITERATOR
 		{
