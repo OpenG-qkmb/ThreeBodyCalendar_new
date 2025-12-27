@@ -342,6 +342,22 @@ double _calendar::rank_hradius(_state& s, _obj& me, const _obj& sun)
 			min_hillr = hill_r;
 		++sun_cnt;
 	}
+	if (sun_cnt == 1)
+		return 1;
+	//std::cout << sun.id << ' ' << dist << ' ' << max_hillr << ' ' << min_hillr << std::endl;
+	if (max_hillr < SMALL_NUM)
+		return 0;
+	if (sun_cnt == 2)
+	{
+		if (dist <= (min_hillr + SMALL_NUM))
+		{
+			return dist / (min_hillr + SMALL_NUM);
+		}
+		else
+		{
+			return 0;
+		}
+	}
 	if (dist <= (min_hillr + SMALL_NUM))
 		return 1;
 	if (dist >= (max_hillr - SMALL_NUM))
@@ -377,6 +393,63 @@ void _calendar::rank_all_new()
 		return;
 	ranklist_ranks.clear();
 	sun_cnt = 0;
+//	double ave = 0, var = 0, dist_min = 1e12;
+//	int index = -1;
+//#pragma omp parallel for reduction(+ : ave)
+//	for (int i = 0; i < s.objs.size(); ++i)
+//	{
+//		if (s.objs[i].type != STAR || s.objs[i] == s.NULL_OBJ)
+//			continue;
+//
+//#pragma omp atomic
+//		++sun_cnt;
+//
+//		ave += s.objs[i].m;
+//	}
+//
+//	if (sun_cnt == 0)
+//	{
+//		current_sun = std::ref(s.NO_SUN_OBJ);
+//		return;
+//	}
+//
+//	ave /= sun_cnt;
+//
+//#pragma omp parallel for reduction(+ : var)
+//	for (int i = 0; i < s.objs.size(); ++i)
+//	{
+//		if (s.objs[i].type != STAR || s.objs[i] == s.NULL_OBJ)
+//			continue;
+//		double tmp = (s.objs[i].m - ave);
+//		var += tmp * tmp;
+//	}
+//	var /= sun_cnt;
+//
+//	if (var < 0.1)
+//	{
+//		for (int i = 0; i < s.objs.size(); ++i)
+//		{
+//			if (s.objs[i].type != STAR || s.objs[i] == s.NULL_OBJ)
+//				continue;
+//			_obj& o = s.get_analyse_obj();
+//			if (o == s.NULL_OBJ)
+//				break;
+//			double dist = o.pos.distance(s.objs[i].pos);
+//			if (dist < (dist_min + SMALL_NUM))
+//			{
+//				dist_min = dist;
+//				index = i;
+//			}
+//		}
+//		if (index < 0 || index >= s.objs.size())
+//		{
+//			current_sun = std::ref(s.NO_SUN_OBJ);
+//			return;
+//		}
+//		current_sun = std::ref(s.objs[index]);
+//		return;
+//	}
+
 #pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < s.objs.size(); ++i)
 	{
@@ -385,7 +458,6 @@ void _calendar::rank_all_new()
 #pragma omp critical
 		{
 			ranklist_ranks[s.objs[i].id] = rank_this(s.objs[i]);
-			++sun_cnt;
 		}
 	}
 	if (ranklist_ranks.empty())
@@ -398,9 +470,9 @@ void _calendar::rank_all_new()
 		double mrank = -1e9;
 		for (auto it = ranklist_ranks.begin(); it != ranklist_ranks.end(); ++it)
 		{
-			if ((it->second.hill + it->second.v + it->second.ecc * 0.5) > mrank)
+			if ((it->second.hill + it->second.v + it->second.ecc * 0.1) > mrank)
 			{
-				mrank = it->second.hill + it->second.v + it->second.ecc * 0.5;
+				mrank = it->second.hill + it->second.v + it->second.ecc * 0.1;
 				best_sun = it;
 			}
 		}

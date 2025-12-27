@@ -313,7 +313,12 @@ double _state::get_semi_a(const _obj& o) // °ë³¤Öá
 	_obj& anlys = get_analyse_obj();
 	if (anlys == NULL_OBJ)
 		return 0.;
-	return -phy::G * anlys.m * o.m / (2.0 * get_orbit_energy(o));
+	double orb_e = get_orbit_energy(o);
+	if (orb_e > -SMALL_NUM)
+	{
+		return anlys.pos.distance(o.pos);
+	}
+	return -phy::G * anlys.m * o.m / (2.0 * orb_e);
 }
 double _state::get_semi_a(const std::string& id)
 {
@@ -365,6 +370,10 @@ double _state::get_hill_radius(const _obj& thisobj, const _obj& thatobj) // Ï£¶û
 	double a = get_semi_a(thisobj);
 	if (a <= 0.)
 		return 0.;
+	if (thisobj.m > thatobj.m * 10)
+		return (thisobj.pos - thatobj.pos).mag() * 0.35;
+	if (thisobj.m > thatobj.m * 1.1)
+		return (thisobj.pos - thatobj.pos).mag() * 0.25;
 	return a * (1 - get_eccent(thisobj).mag()) * std::cbrt(thisobj.m / (3.0 * thatobj.m));
 }
 double _state::get_hill_radius(const std::string& id1, const std::string& id2)

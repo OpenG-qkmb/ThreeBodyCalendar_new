@@ -653,6 +653,8 @@ void _user::show(_state& s, _calendar& cal)
 	std::string id = cal.get_current_sun().id;
 	std::string title = std::format("Current sun: {} (rate = {:f}, {:f}, {:f}) \n Time: {:f} \n YEAR_LEN = {:f} \n Year {:d}: {}", id, cal.ranklist_ranks[id].v, cal.ranklist_ranks[id].hill, cal.ranklist_ranks[id].ecc, s.time, cal.std_year, static_cast<int>(s.time / cal.std_year), cal.era_name());
 	xyprintf(0, 0, title.c_str());
+	/*std::string test = std::format("a = {:f}; ecc = {:f}; energy = {:f}", s.get_semi_a(id), s.get_eccent(id).mag(), s.get_orbit_energy(id));
+	xyprintf(0, height / 2, test.c_str());*/
 	for (int i = 0; i < s.objs.size(); ++i)
 	{
 		_3dv screen = getpos_ori(s.objs[i].pos);

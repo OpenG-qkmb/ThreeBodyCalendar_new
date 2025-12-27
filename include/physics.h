@@ -141,6 +141,9 @@ public:
 	double get_T(const _obj& o); // 周期
 	double get_T(const std::string& id);
 
+	//double get_T_without_kepler(const _obj& o); // 周期，但不用开普勒第三定律（在其他恒星干扰下不准）
+	//double get_T_without_kepler(const std::string& id);
+
 	double get_hill_radius(const _obj& thisobj, const _obj& thatobj); // 希尔半径
 	double get_hill_radius(const std::string& id1, const std::string& id2);
 
