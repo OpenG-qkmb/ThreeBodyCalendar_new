@@ -54,8 +54,8 @@ struct _era_info
 namespace gyear // 预先积分求一年时长时的步长和时长设置
 {
 	constexpr double dt = 1.;
-	constexpr double timelen = 1500;
-	constexpr double piece = 500;
+	constexpr double timelen = 7500;
+	constexpr double piece = 175; // 实践证明：需要细化一些
 }
 
 class _calendar

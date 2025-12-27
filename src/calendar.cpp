@@ -573,6 +573,7 @@ _era_type _calendar::get_era()
 void _calendar::get_stdyear(_state& s, const std::string& method)
 {
 	double time0 = 0;
+	std::vector<double> years;
 	state_true = this_state;
 	state_getyear = std::ref(s);
 	this_state = state_getyear;
@@ -586,13 +587,34 @@ void _calendar::get_stdyear(_state& s, const std::string& method)
 			_obj& cur_sun = get_current_sun();
 			if (current_type == STABLE && cur_sun != s.NO_SUN_OBJ && cur_sun != s.NULL_OBJ)
 			{
-				std_year = s.get_T(cur_sun);
-				break;
+				years.push_back(s.get_T(cur_sun));
 			}
 		}
 		integrate_dt(s, gyear::dt, method);
 		rank_all_new();
 		pushrank();
+	}
+	if (!years.empty())
+	{
+		double ave = 0, stdvar = 0;
+		int yrs = years.size();
+#pragma omp parallel for reduction(+ : ave)
+		for (int i = 0; i < yrs; ++i)
+		{
+			ave += years[i];
+		}
+		ave /= static_cast<double>(yrs);
+#pragma omp parallel for reduction(+ : stdvar)
+		for (int i = 0; i < yrs; ++i)
+		{
+			double add = years[i] - ave;
+			stdvar += add * add;
+		}
+		stdvar = std::sqrt(stdvar / static_cast<double>(yrs));
+		if ((stdvar < 10) || ((ave / stdvar) < 0.25))
+			std_year = ave;
+		else
+			std_year = years[0];
 	}
 	this_state = state_true;
 	state_getyear = std::ref(NULL_STATE);
